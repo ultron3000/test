@@ -32,32 +32,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie Title 1</title>
-    <link href="https://vjs.zencdn.net/7.15.4/video-js.css" rel="stylesheet">
+    <title>HLS Stream</title>
+    <link href="https://vjs.zencdn.net/7.21.0/video-js.css" rel="stylesheet" />
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        video {
+        .video-container {
             width: 100%;
             height: auto;
         }
     </style>
 </head>
 <body>
+    <div class="video-container">
+        <video id="my-video" class="video-js vjs-default-skin" controls preload="auto" width="640" height="360" data-setup="{}">
+            <source src="https://dronixfire.live/file1/GN+ezBJUES3+saJ147hsBNjCC7XB2scaxhEnqOekbf83g9AckCOvM0+cclZCv9Xfx+0AyL7~h8Q1pJ3~AXuCTXN3ZuDF22FWTuZ6SHGOGnKJa5NMSvZME0AyMEb~2k22i+KpDuAb63vhH6z46VqLQKedGW71uYcxSkRYSKk4OkA=/cGxheWxpc3QubTN1OA==.m3u8" type="application/x-mpegURL">
+            Your browser does not support the video tag.
+        </video>
+    </div>
 
-<h1>Movie Title 1</h1>
-
-<video id="my-video" class="video-js" controls preload="auto">
-    <source src="https://bronlexsky.live/file1/Ks4DpAMLohACNi~OGcqPr1N+yDn2tY0jESdv+wjHAUXj8lCMTGBVqcpS0ljdFCLtPgjHYLccu+NIUii1GSzjbv9CLzvweQH8UrpVKSzHnc6p8drfumBrjA49jRxgNFRUdk5CZywNZJwLmIH60ZT6G37yAyPgrWDlV8ybSZsrbPo=/MTA4MA==/aW5kZXgubTN1OA==.m3u8" type="application/x-mpegURL">
-    Your browser does not support HTML5 video.
-</video>
-
-<script src="https://vjs.zencdn.net/7.15.4/video.min.js"></script>
-
-<a href="index.html">Back to Movie Library</a>
-
+    <script src="https://vjs.zencdn.net/7.21.0/video.min.js"></script>
 </body>
 </html>
 ">WALL-E</a>
