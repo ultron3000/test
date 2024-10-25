@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finding Nemo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        video {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Finding Nemo</h1>
+
+<video id="my-video" controls preload="auto"></video>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.1.5/hls.min.js"></script>
+<script>
+    var video = document.getElementById('my-video');
+    var videoSrc = 'https://drunexfire.live/file1/HS+1RZDbwKWLyAQ6qLSk19w+ALiu5MyehgAOj1Y+BVnrXvWJt3hkiLkYl~TnVzzAGEhTvhi793jJkgbbJDdEwCsjIA3OfBHoETiExPaZSMXCTkPI3DwowN7RY5wIJE9DDMjo8jZnXjz4wAPOQ~dRQ7OIl5FjrgzVY2tXW5lpfFk=/MTA4MA==/aW5kZXgubTN1OA==.m3u8';
+
+    if (Hls.isSupported()) {
+        var hls = new
