@@ -3,26 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Player</title>
-    <!-- Include Video.js CSS -->
-    <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
+    <title>HLS Video Player</title>
+    <link href="https://vjs.zencdn.net/7.15.4/video-js.css" rel="stylesheet">
     <style>
-        /* Make the video player responsive */
-        .video-js {
+        /* Fullscreen responsive video */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .video-container {
+            position: relative;
             width: 100%;
-            height: auto;
+            height: 100%;
+        }
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures the video covers the area */
         }
     </style>
 </head>
 <body>
 
-    <h1>Video Player</h1>
-    <video id="videoPlayer" class="video-js vjs-default-skin" controls preload="auto" data-setup='{}'>
+<div class="video-container">
+    <video
+        id="my-video"
+        class="video-js vjs-big-play-centered"
+        controls
+        preload="auto"
+        data-setup='{}'>
         <source src="https://dronixfire.live/file1/GN+ezBJUES3+saJ147hsBNjCC7XB2scaxhEnqOekbf83g9AckCOvM0+cclZCv9Xfx+0AyL7~h8Q1pJ3~AXuCTXN3ZuDF22FWTuZ6SHGOGnKJa5NMSvZME0AyMEb~2k22i+KpDuAb63vhH6z46VqLQKedGW71uYcxSkRYSKk4OkA=/cGxheWxpc3QubTN1OA==.m3u8" type="application/x-mpegURL">
-        Your browser does not support the video tag.
+        Your browser does not support HTML5 video.
     </video>
+</div>
 
-    <!-- Include Video.js library -->
-    <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
+<script src="https://vjs.zencdn.net/7.15.4/video.min.js"></script>
 </body>
 </html>
