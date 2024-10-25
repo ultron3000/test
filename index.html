@@ -3,45 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HLS Video Player</title>
-    <link href="https://vjs.zencdn.net/7.15.4/video-js.css" rel="stylesheet">
+    <title>HLS Video Library</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-        }
-        .video-container {
             margin: 20px;
         }
-        video {
-            width: 100%;
-            height: auto;
+        a {
+            display: block;
+            margin: 10px 0;
+            font-size: 20px;
+            text-decoration: none;
+            color: blue;
+        }
+        a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
 
-<h1>HLS Video Player</h1>
+<h1>Movie Library</h1>
 
 <!-- List of Movies -->
-<div id="video-list">
-    <div class="video-container">
-        <h2>The Wild Robot</h2>
-        <video id="video1" class="video-js" controls preload="auto">
-            <source src="https://dronixfire.live/file1/GN+ezBJUES3+saJ147hsBNjCC7XB2scaxhEnqOekbf83g9AckCOvM0+cclZCv9Xfx+0AyL7~h8Q1pJ3~AXuCTXN3ZuDF22FWTuZ6SHGOGnKJa5NMSvZME0AyMEb~2k22i+KpDuAb63vhH6z46VqLQKedGW71uYcxSkRYSKk4OkA=/cGxheWxpc3QubTN1OA==.m3u8" type="application/x-mpegURL">
-            Your browser does not support HTML5 video.
-        </video>
-    </div>
-    <div class="video-container">
-        <h2>Wall-E</h2>
-        <video id="video2" class="video-js" controls preload="auto">
-            <source src="https://bronlexsky.live/file1/Ks4DpAMLohACNi~OGcqPr1N+yDn2tY0jESdv+wjHAUXj8lCMTGBVqcpS0ljdFCLtPgjHYLccu+NIUii1GSzjbv9CLzvweQH8UrpVKSzHnc6p8drfumBrjA49jRxgNFRUdk5CZywNZJwLmIH60ZT6G37yAyPgrWDlV8ybSZsrbPo=/MTA4MA==/aW5kZXgubTN1OA==.m3u8" type="application/x-mpegURL">
-            Your browser does not support HTML5 video.
-        </video>
-    </div>
-    <!-- Add more movies here -->
-</div>
+<a href="movie1.html">Movie Title 1</a>
+<a href="movie2.html">Movie Title 2</a>
+<!-- Add more movie links here -->
 
-<script src="https://vjs.zencdn.net/7.15.4/video.min.js"></script>
 </body>
 </html>
