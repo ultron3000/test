@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wall E</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        video {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Wall E</h1>
+
+<video id="my-video" controls preload="auto"></video>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.1.5/hls.min.js"></script>
+<script>
+    var video = document.getElementById('my-video');
+    var videoSrc = 'https://bronlexsky.live/file1/Ks4DpAMLohACNi~OGcqPr1N+yDn2tY0jESdv+wjHAUXj8lCMTGBVqcpS0ljdFCLtPgjHYLccu+NIUii1GSzjbv9CLzvweQH8UrpVKSzHnc6p8drfumBrjA49jRxgNFRUdk5CZywNZJwLmIH60ZT6G37yAyPgrWDlV8ybSZsrbPo=/MTA4MA==/aW5kZXgubTN1OA==.m3u8';
+
+    if (Hls.isSupported()) {
+        var hls = new Hls();
+        hls.loadSource(videoSrc);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            video.play();
+        });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = videoSrc;
+        video.addEventListener('loadedmetadata', function() {
+            video.play();
+        });
+    }
+</script>
+
+<a href="index.html">Back to Movie Library</a>
+
+</body>
+</html>
