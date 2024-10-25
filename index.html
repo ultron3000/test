@@ -6,39 +6,40 @@
     <title>HLS Video Player</title>
     <link href="https://vjs.zencdn.net/7.15.4/video-js.css" rel="stylesheet">
     <style>
-        /* Fullscreen responsive video */
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
         }
         .video-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
+            margin: 20px;
         }
-        .video-container video {
+        video {
             width: 100%;
-            height: 100%;
-            object-fit: cover; /* Ensures the video covers the area */
+            height: auto;
         }
     </style>
 </head>
 <body>
 
-<div class="video-container">
-    <video
-        id="my-video"
-        class="video-js vjs-big-play-centered"
-        controls
-        preload="auto"
-        data-setup='{}'>
-        <source src="https://dronixfire.live/file1/GN+ezBJUES3+saJ147hsBNjCC7XB2scaxhEnqOekbf83g9AckCOvM0+cclZCv9Xfx+0AyL7~h8Q1pJ3~AXuCTXN3ZuDF22FWTuZ6SHGOGnKJa5NMSvZME0AyMEb~2k22i+KpDuAb63vhH6z46VqLQKedGW71uYcxSkRYSKk4OkA=/cGxheWxpc3QubTN1OA==.m3u8" type="application/x-mpegURL">
-        Your browser does not support HTML5 video.
-    </video>
+<h1>HLS Video Player</h1>
+
+<!-- List of Movies -->
+<div id="video-list">
+    <div class="video-container">
+        <h2>Movie Title 1</h2>
+        <video id="video1" class="video-js" controls preload="auto">
+            <source src="LINK_TO_HLS_1.m3u8" type="application/x-mpegURL">
+            Your browser does not support HTML5 video.
+        </video>
+    </div>
+    <div class="video-container">
+        <h2>Movie Title 2</h2>
+        <video id="video2" class="video-js" controls preload="auto">
+            <source src="LINK_TO_HLS_2.m3u8" type="application/x-mpegURL">
+            Your browser does not support HTML5 video.
+        </video>
+    </div>
+    <!-- Add more movies here -->
 </div>
 
 <script src="https://vjs.zencdn.net/7.15.4/video.min.js"></script>
