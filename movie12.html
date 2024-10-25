@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soul</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        video {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Soul</h1>
+
+<video id="my-video" controls preload="auto"></video>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.1.5/hls.min.js"></script>
+<script>
+    var video = document.getElementById('my-video');
+    var videoSrc = 'https://morvixmoon.pro/file1/sF+RZqR0mD36q2JCeWeIu8~YnxfX36~jLn+SP+CLBKmTFE1XzVRyrJD1MIrF8Wc2j6C3emMBbyG6jY8YuOws5gSS+PIOWM1Z+UYZyEJZj4RFG2NDhCmjRAO1Y4ARndCj04ZMi3BytrAeEJg2+QkuGN2UvqNMJMSZwcDTW4Oe~kU=/MTA4MA==/aW5kZXgubTN1OA==.m3u8';
+
+    if (Hls.isSupported()) {
+        var hls = new Hls();
+        hls.loadSource(videoSrc);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            video.play();
+        });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = videoSrc;
+        video.addEventListener('loadedmetadata', function() {
+            video.play();
+        });
+    }
+</script>
+
+<a href="index.html">Back to Movie Library</a>
+
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Good Dinosaur</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        video {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h1>The Good Dinosaur</h1>
+
+<video id="my-video" controls preload="auto"></video>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.1.5/hls.min.js"></script>
+<script>
+    var video = document.getElementById('my-video');
+    var videoSrc = 'https://tralvixlight.xyz/file1/RNseyc9vesPlhmedqMZnSzfkTsnRqYxQUhtLngYk~6bUlCellLktknLhgnhisDw9ZduqGBhRp~8LozIZXshafkHll5zjtBf7NDrRir01f0NAuFAFQ+xjCQypiBIdVuxBF6qaXTzAZic7JDiEjnAAXPdBUj2J30YxV4MLqEPuJ1Q=/MTA4MA==/aW5kZXgubTN1OA==.m3u8';
+
+    if (Hls.isSupported()) {
+        var hls = new Hls();
+        hls.loadSource(videoSrc);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            video.play();
+        });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = videoSrc;
+        video.addEventListener('loadedmetadata', function() {
+            video.play();
+        });
+    }
+</script>
+
+<a href="index.html">Back to Movie Library</a>
+
+</body>
+</html>
