@@ -45,25 +45,26 @@
       padding: 0.5rem;
       font-size: 1.1rem;
     }
+    a {
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
-  <div class="header">Raid 1&2</div>
+  <div class="header">Raid Movie Universe</div>
   <div class="grid">
-    <div class="card" onclick="playMovie('TheRaid1')">
-      <img src="https://image.tmdb.org/t/p/w500/aA5qHS0FbSXO8PxcxUIHbDrJyuh.jpg" alt="The Raid"/>
-      <div class="card-title">Raid (2018)</div>
-    </div>
-    <div class="card" onclick="playMovie('TheRaid2')">
-      <img src="https://image.tmdb.org/t/p/w500/5lImWzF9QFPvsUGdMeNCkYsu2iZ.jpg" alt="The Raid 2"/>
-      <div class="card-title">Raid 2 (2025)</div>
-    </div>
+    <a href="player.html?movie=https://u.pcloud.link/publink/show?code=XZXo8b5ZhyhTB7cHmBjXQ4q8w55TMJXoSni7">
+      <div class="card">
+        <img src="https://upload.wikimedia.org/wikipedia/en/3/3e/Raid_2018_film_poster.jpg" alt="Raid (2018)">
+        <div class="card-title">Raid (2018)</div>
+      </div>
+    </a>
+    <a href="player.html?movie=https://u.pcloud.link/publink/show?code=XZ2c8b5ZdUBvfeiRoELpjUAL7lh7ymJyDLv7">
+      <div class="card">
+        <img src="https://i.ytimg.com/vi/KxdZ5EF2XCc/maxresdefault.jpg" alt="Raid 2 (2025)">
+        <div class="card-title">Raid 2 (2025)</div>
+      </div>
+    </a>
   </div>
-
-  <script>
-    function playMovie(id) {
-      window.location.href = `player.html?movie=${id}`;
-    }
-  </script>
 </body>
 </html>
