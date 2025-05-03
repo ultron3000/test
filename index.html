@@ -1,44 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PIXAR</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 20px;
-        }
-        a {
-            display: block;
-            margin: 10px 0;
-            font-size: 20px;
-            text-decoration: none;
-            color: blue;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Raid Movie Universe</title>
+  <style>
+    body {
+      background-color: #000;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    .header {
+      background-color: #111;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      font-size: 2rem;
+      letter-spacing: 2px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+    }
+    .card {
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+    .card:hover {
+      transform: scale(1.05);
+    }
+    .card img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .card-title {
+      color: #fff;
+      text-align: center;
+      padding: 0.5rem;
+      font-size: 1.1rem;
+    }
+  </style>
 </head>
 <body>
+  <div class="header">Raid Movie Universe</div>
+  <div class="grid">
+    <div class="card" onclick="playMovie('TheRaid1')">
+      <img src="https://image.tmdb.org/t/p/w500/aA5qHS0FbSXO8PxcxUIHbDrJyuh.jpg" alt="The Raid"/>
+      <div class="card-title">The Raid: Redemption (2011)</div>
+    </div>
+    <div class="card" onclick="playMovie('TheRaid2')">
+      <img src="https://image.tmdb.org/t/p/w500/5lImWzF9QFPvsUGdMeNCkYsu2iZ.jpg" alt="The Raid 2"/>
+      <div class="card-title">The Raid 2 (2014)</div>
+    </div>
+  </div>
 
-<h1>Animated Movies</h1>
-
-<a href="movie1.html">The Wild Robot</a>
-<a href="movie2.html">UP</a>
-<a href="movie3.html">Wall E</a>
-<a href="movie4.html">Finding Nemo</a>
-<a href="movie5.html">Finding Dory</a>
-<a href="movie6.html">Luca</a>
-<a href="movie7.html">Inside Out</a>
-<a href="movie8.html">Inside Out 2</a>
-<a href="movie9.html">The Incredibles</a>
-<a href="movie10.html">Incredibles 2</a>
-<a href="movie11.html">Elemental</a>   
-<a href="movie12.html">Soul</a> 
-<a href="movie13.html">The Good Dinosaur</a> 
-<a href="movie14.html">Turning Red</a>     
+  <script>
+    function playMovie(id) {
+      window.location.href = `Raid_Player.html?movie=${id}`;
+    }
+  </script>
 </body>
 </html>
