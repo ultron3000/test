@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Raid Movie Player</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    body {
+      margin: 0;
+      background-color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    video {
+      width: 90%;
+      max-width: 1000px;
+      border-radius: 12px;
+      background: #000;
+      outline: none;
+    }
+    .back-button {
+      color: white;
+      margin-top: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <video id="player" controls autoplay></video>
+  <div class="back-button" onclick="history.back()">← Back to Index</div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const movieUrl = urlParams.get('movie');
+    const video = document.getElementById('player');
+
+    if (Hls.isSupported() && movieUrl && movieUrl.includes('.m3u8')) {
+      const hls = new Hls();
+      hls.loadSource(movieUrl);
+      hls.attachMedia(video);
+    } else {
+      video.src = movieUrl;
+    }
+  </script>
+</body>
+</html>
