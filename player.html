@@ -1,63 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Universal Premium Player</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Movie Player</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-body{background:#0b0b0b;color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;padding:18px;display:flex;flex-direction:column;align-items:center;}
-.container{width:100%;max-width:980px;}
-.top{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
-input[type="text"]{flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#0f1724;color:#fff}
-button{padding:10px 14px;border-radius:8px;border:none;background:#f59e0b;color:#0b0b0b;cursor:pointer}
-.video-wrap{position:relative;padding-top:56.25%;background:#000;border-radius:12px;overflow:hidden;border:3px solid #111;margin-top:14px;}
-video{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;outline:none;}
+body{background:#0b0b0b;color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:18px;}
+header{width:100%;max-width:980px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+header h1{margin:0;color:#f59e0b;font-size:1.5rem}
+header a{color:#94a3b8;text-decoration:none;display:flex;align-items:center;}
+header a:hover{color:#f59e0b;}
+.video-wrap{position:relative;width:100%;max-width:980px;padding-top:56.25%;background:#000;border-radius:12px;overflow:hidden;border:3px solid #111;}
+video{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;}
 #loading-overlay{position:absolute;inset:0;background:rgba(2,6,23,.9);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:5;color:#f59e0b;font-weight:600}
 @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 .spinner{width:40px;height:40px;border:4px solid #333;border-top-color:#f59e0b;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:12px}
-.hint{font-size:13px;color:#94a3b8;margin-top:8px}
 </style>
 </head>
 <body>
-<div class="container">
-  <h2 style="margin:0;color:#f59e0b" id="movie-title">Universal Premium Player</h2>
+<header>
+  <h1 id="movie-title">Premium Movie Player</h1>
+  <a href="index.html"><i class="fas fa-arrow-left" style="margin-right:6px"></i>Back</a>
+</header>
 
-  <div class="top">
-    <input id="video-url-input" type="text" placeholder="Paste any link (.m3u8 .mp4 .mpd .txt etc.)"/>
-    <button id="load-btn">Load & Play</button>
+<div class="video-wrap">
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div id="loading-text">Loading video…</div>
   </div>
-
-  <div class="hint">Also works with ?video=… in the URL.</div>
-
-  <div class="video-wrap">
-    <div id="loading-overlay">
-      <div class="spinner"></div>
-      <div id="loading-text">Loading video…</div>
-    </div>
-    <video id="video" controls playsinline crossorigin="anonymous"></video>
-  </div>
+  <video id="video" controls playsinline crossorigin="anonymous"></video>
 </div>
 
 <script>
-const params=new URLSearchParams(window.location.search);
-const title=params.get('title');
-const videoParam=params.get('video');
-if(title) document.getElementById('movie-title').textContent=title;
+const params = new URLSearchParams(window.location.search);
+const title = params.get('title');
+const videoParam = params.get('video');
+if(title) document.getElementById('movie-title').textContent = title;
 
-const video=document.getElementById('video');
-const overlay=document.getElementById('loading-overlay');
-const input=document.getElementById('video-url-input');
-const loadBtn=document.getElementById('load-btn');
-let hls,dashPlayer;
+const video = document.getElementById('video');
+const overlay = document.getElementById('loading-overlay');
+let hls, dashPlayer;
 
-function showOverlay(msg){overlay.style.display='flex';document.getElementById('loading-text').textContent=msg;}
+function showOverlay(msg){
+  overlay.style.display='flex';
+  document.getElementById('loading-text').textContent=msg;
+}
 function hideOverlay(){overlay.style.display='none';}
 
-async function playVideo(url){
-  // destroy previous engines
+async function loadVideo(url){
+  // clear previous engines
   if(hls){hls.destroy();hls=null;}
   if(dashPlayer){dashPlayer.reset();dashPlayer=null;}
   video.pause();
@@ -65,7 +59,7 @@ async function playVideo(url){
   video.load();
   showOverlay('Loading video…');
 
-  // .txt fetch
+  // handle .txt wrappers
   if(url.toLowerCase().endsWith('.txt')){
     try{
       const res=await fetch(url);
@@ -73,25 +67,25 @@ async function playVideo(url){
     }catch(e){alert('Failed to load .txt file');hideOverlay();return;}
   }
 
-  const lower=url.toLowerCase();
+  const lower = url.toLowerCase();
 
-  // DASH
+  // DASH .mpd
   if(lower.includes('.mpd')){
-    dashPlayer=dashjs.MediaPlayer().create();
-    dashPlayer.initialize(video,url,true);
+    dashPlayer = dashjs.MediaPlayer().create();
+    dashPlayer.initialize(video, url, true);
     hideOverlay();
     return;
   }
 
-  // HLS.js first
+  // HLS first
   if(Hls.isSupported()){
-    hls=new Hls();
-    hls.loadSource(url);
+    hls = new Hls();
+    hls.loadSource(url); // pass exact URL with + and =
     hls.attachMedia(video);
     hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play());
     hls.on(Hls.Events.ERROR,(event,data)=>{
       if(data.fatal){
-        // fallback direct
+        // fallback to direct src if HLS fails
         hls.destroy();hls=null;
         video.src=url;
         video.addEventListener('loadedmetadata',()=>video.play());
@@ -102,7 +96,7 @@ async function playVideo(url){
     video.src=url;
     video.addEventListener('loadedmetadata',()=>video.play());
   }else{
-    // direct MP4/WebM
+    // direct MP4/WebM fallback
     video.src=url;
     video.addEventListener('loadedmetadata',()=>video.play());
     video.load();
@@ -112,16 +106,11 @@ async function playVideo(url){
 video.addEventListener('canplay',hideOverlay);
 video.addEventListener('loadedmetadata',hideOverlay);
 
-loadBtn.addEventListener('click',()=>{
-  const url=input.value.trim();
-  if(url) playVideo(url);
-});
-
 window.addEventListener('load',()=>{
   if(videoParam){
-    const qlink=decodeURIComponent(videoParam);
-    input.value=qlink;
-    playVideo(qlink);
+    // decode once, pass exact string to loader
+    const qlink = decodeURIComponent(videoParam);
+    loadVideo(qlink);
   }
 });
 </script>
