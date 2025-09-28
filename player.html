@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Premium Movie Player</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* (kept styling very close to your original) */
+    /* --- preserved styling from your original --- */
     @keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
     .loading-spinner{animation:spin 1s linear infinite;}
     .video-container{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;background:#000;border-radius:0.75rem;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);}
@@ -24,12 +24,13 @@
     .tooltip{visibility:hidden;opacity:0;transition:opacity .3s;}
     .tooltip-parent:hover .tooltip{visibility:visible;opacity:1;}
     @media (max-width:768px){.controls-container{padding:.5rem}.control-btn{padding:.5rem}.volume-container{display:none}.mobile-volume{display:block}}
-    body{background:#0b0b0b;color:#f3f4f6;font-family:Inter,Arial,Helvetica,sans-serif;padding:18px;}
+    body{background:#0b0b0b;color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;padding:18px}
     .header{width:100%;max-width:1100px;margin:0 auto 18px;display:flex;justify-content:space-between;align-items:center}
     .header h1{color:#f59e0b;margin:0}
     .header a{color:#94a3b8;text-decoration:none}
     .container{width:100%;max-width:1100px;margin:0 auto}
-    .info-msg{margin-top:10px;color:#ffb4a2;font-size:13px;display:none}
+    #info-bar{margin-top:10px;color:#ffb4a2;font-size:13px;display:none;white-space:break-spaces;}
+    .debug-url{font-size:12px;color:#9ca3af;word-break:break-all;margin-top:8px;}
   </style>
 </head>
 <body>
@@ -39,7 +40,6 @@
   </div>
 
   <div class="container">
-    <!-- Loading Overlay (absolute inside video-container) -->
     <div class="video-container" id="video-container">
       <div id="loading-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;">
         <div class="loading-spinner" style="width:64px;height:64px;border:6px solid #2b2b2b;border-top-color:#f59e0b;border-radius:50%;margin-bottom:12px"></div>
@@ -49,11 +49,9 @@
 
       <video id="video" crossorigin="anonymous" playsinline></video>
 
-      <!-- Custom Controls (kept intact from your original) -->
+      <!-- Controls (kept from your original) -->
       <div id="controls-container" class="controls-container" style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg, rgba(0,0,0,0.75), transparent);padding:12px;opacity:1">
-        <div class="progress-container" id="progress-container">
-          <div class="progress-bar" id="progress-bar" style="width:0%"></div>
-        </div>
+        <div class="progress-container" id="progress-container"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
 
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
           <div style="display:flex;align-items:center;gap:8px">
@@ -96,9 +94,6 @@
               <button id="quality-btn" class="control-btn" style="background:none;border:none;color:white"><i class="fas fa-cog"></i></button>
               <div id="quality-menu" class="settings-menu" style="position:absolute;bottom:100%;right:0;background:#1f2937;padding:6px;border-radius:6px;display:none">
                 <div class="quality-option" data-quality="auto">Auto</div>
-                <div class="quality-option" data-quality="720">720p</div>
-                <div class="quality-option" data-quality="480">480p</div>
-                <div class="quality-option" data-quality="360">360p</div>
               </div>
             </div>
 
@@ -108,76 +103,73 @@
       </div>
     </div>
 
-    <div class="info-msg" id="info-msg"></div>
+    <div id="info-bar"></div>
+    <div class="debug-url" id="debug-url"></div>
   </div>
 
   <script>
-    /***********************
-     * Helper: get raw video param (robust)
-     ***********************/
+    /* ============================
+       Robust parameter extraction
+       - preserves +, = and long raw video values
+       ============================ */
     function getRawVideoParam() {
-      // Try URLSearchParams first (standard)
+      // Try URLSearchParams first
       const params = new URLSearchParams(window.location.search);
       const p = params.get('video');
-      if (p) return p; // usually decoded, when encoded by encodeURIComponent
+      if (p) return p; // normally decoded as returned by browser
 
-      // Fallback: extract everything after first occurrence of "video="
+      // Fallback: extract raw substring after 'video=' in full href
       const href = window.location.href;
       const idx = href.indexOf('video=');
       if (idx === -1) return null;
+      let raw = href.substring(idx + 6);
 
-      // take substring after 'video='
-      let raw = href.substring(idx + 6); // everything after video=
-      // If there are known parameter separators appearing later (e.g., &title=), trim them
+      // Stop at other known params or hash
       const cut = raw.search(/(&title=|&subtitle=|&autoplay=|&mode=|&utm_|#)/i);
       if (cut !== -1) raw = raw.substring(0, cut);
 
-      // It might be percent encoded or not; try decodeURIComponent safely
+      // Try decodeURIComponent safely (if it was encoded)
       try {
         const dec = decodeURIComponent(raw);
-        // If decode gives an empty/invalid result, fall back to raw
         if (dec && dec.length > 0) raw = dec;
       } catch (e) {
-        // ignore decode errors and keep raw
+        // keep raw if decode fails
       }
 
-      // If raw contains spaces (from a '+' decoded wrongly), replace spaces back to '+'
-      // (some sources put '+' chars that got turned into spaces)
+      // If plus signs got turned into spaces accidentally, restore heuristically
       if (raw.includes(' ')) {
-        // heuristic: if it looks like it should be a URL, restore pluses
-        const maybeUrl = raw.replace(/ /g, '+');
-        if (maybeUrl.startsWith('http') || maybeUrl.includes('.m3u8') || maybeUrl.includes('.mp4')) {
-          raw = maybeUrl;
+        const maybePlus = raw.replace(/ /g, '+');
+        if (maybePlus.startsWith('http') || maybePlus.includes('.m3u8') || maybePlus.includes('.mp4')) {
+          raw = maybePlus;
         }
       }
 
       return raw;
     }
 
-    /***********************
-     * DOM and state
-     ***********************/
+    /* ============================
+       DOM & parameters
+       ============================ */
     const params = new URLSearchParams(window.location.search);
     const titleParam = params.get('title');
-    const rawVideoParam = getRawVideoParam();
-    const subtitleParam = params.get('subtitle') || null;
-    const saveKey = `continue-${titleParam || 'video'}`;
+    const subtitleParam = params.get('subtitle');
+    const rawVideo = getRawVideoParam(); // this preserves exact characters
+    const saveKey = `continue-${titleParam||'video'}`;
 
+    // DOM
+    const movieTitle = document.getElementById('movie-title');
     const video = document.getElementById('video');
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingText = document.getElementById('loading-text');
-    const movieTitle = document.getElementById('movie-title');
-    const videoContainer = document.getElementById('video-container');
-    const controlsContainer = document.getElementById('controls-container');
-    const progressContainer = document.getElementById('progress-container');
-    const progressBar = document.getElementById('progress-bar');
+    const loadingDetails = document.getElementById('loading-details');
+    const infoBar = document.getElementById('info-bar');
+    const debugUrlEl = document.getElementById('debug-url');
+
     const playPauseBtn = document.getElementById('play-pause');
     const rewindBtn = document.getElementById('rewind');
     const forwardBtn = document.getElementById('forward');
     const volumeBtn = document.getElementById('volume-btn');
     const volumeSlider = document.getElementById('volume-slider');
-    const mobileVolumeSlider = null; // not present in this trimmed UI
-    const volumeContainer = document.getElementById('volume-container');
     const speedBtn = document.getElementById('speed-btn');
     const speedMenu = document.getElementById('speed-menu');
     const subtitleBtn = document.getElementById('subtitle-btn');
@@ -185,72 +177,72 @@
     const qualityBtn = document.getElementById('quality-btn');
     const qualityMenu = document.getElementById('quality-menu');
     const fullscreenBtn = document.getElementById('fullscreen-btn');
-    const infoMsg = document.getElementById('info-msg');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const timeDisplay = document.getElementById('time-display');
 
-    let isDraggingProgress = false;
     let hls = null;
     let dashPlayer = null;
+    let isDragging = false;
     let lastVolume = 1;
-    let settingsOpen = false;
 
-    /***********************
-     * Init
-     ***********************/
-    function initPlayer() {
-      if (titleParam) movieTitle.textContent = titleParam;
-      setupEventListeners();
+    if (titleParam) movieTitle.textContent = titleParam;
 
-      if (!rawVideoParam) {
-        showLoading('No video provided');
-        info('No ?video= parameter found in URL.');
-        return;
-      }
-
-      // start loading
-      loadVideo(rawVideoParam);
+    function showLoading(msg) {
+      loadingOverlay.style.display = 'flex';
+      loadingText.textContent = msg || 'Loading movie...';
+    }
+    function hideLoading() {
+      loadingOverlay.style.display = 'none';
+    }
+    function showInfo(msg) {
+      infoBar.style.display = 'block';
+      infoBar.textContent = msg;
+    }
+    function hideInfo() {
+      infoBar.style.display = 'none';
+      infoBar.textContent = '';
+    }
+    function debugUrl(msg) {
+      debugUrlEl.style.display = 'block';
+      debugUrlEl.textContent = msg;
     }
 
-    /***********************
-     * Event wiring (controls)
-     ***********************/
-    function setupEventListeners() {
-      // video events
+    /* ============================
+       Player initialization & controls
+       ============================ */
+    function setupControls() {
       video.addEventListener('timeupdate', updateProgress);
-      video.addEventListener('loadedmetadata', updateDuration);
-      video.addEventListener('play', updatePlayPauseIcon);
-      video.addEventListener('pause', updatePlayPauseIcon);
-      video.addEventListener('volumechange', updateVolumeIcon);
-      video.addEventListener('click', togglePlayPause);
-      video.addEventListener('dblclick', toggleFullscreen);
+      video.addEventListener('loadedmetadata', onLoadedMeta);
+      video.addEventListener('play', updatePlayIcon);
+      video.addEventListener('pause', updatePlayIcon);
+      video.addEventListener('error', onVideoError);
 
-      // controls
-      playPauseBtn.addEventListener('click', togglePlayPause);
-      rewindBtn.addEventListener('click', () => seek(-10));
-      forwardBtn.addEventListener('click', () => seek(10));
+      playPauseBtn.addEventListener('click', togglePlay);
+      rewindBtn.addEventListener('click', ()=>seek(-10));
+      forwardBtn.addEventListener('click', ()=>seek(10));
       volumeBtn.addEventListener('click', toggleMute);
-      volumeSlider.addEventListener('input', updateVolume);
+      volumeSlider.addEventListener('input', (e)=>{video.volume = parseFloat(e.target.value); lastVolume = video.volume;});
       fullscreenBtn.addEventListener('click', toggleFullscreen);
 
-      progressContainer.addEventListener('mousedown', startDraggingProgress);
-      document.addEventListener('mousemove', dragProgress);
-      document.addEventListener('mouseup', stopDraggingProgress);
+      progressContainer.addEventListener('mousedown', (e)=>{ isDragging=true; updateSeekFromEvent(e); });
+      document.addEventListener('mousemove', (e)=>{ if(isDragging) updateSeekFromEvent(e); });
+      document.addEventListener('mouseup', ()=>{ isDragging=false; });
 
-      // menus
-      speedBtn.addEventListener('click', () => toggleMenu(speedMenu));
-      subtitleBtn.addEventListener('click', () => toggleMenu(subtitleMenu));
-      qualityBtn.addEventListener('click', () => toggleMenu(qualityMenu));
-
-      document.querySelectorAll('.speed-option').forEach(opt => {
-        opt.addEventListener('click', () => {
+      // speed menu
+      document.querySelectorAll('.speed-option').forEach(opt=>{
+        opt.addEventListener('click', ()=>{
           const s = parseFloat(opt.dataset.speed);
           video.playbackRate = s;
           speedBtn.textContent = `${s}x`;
           speedMenu.style.display = 'none';
         });
       });
+      speedBtn.addEventListener('click', ()=>{ speedMenu.style.display = speedMenu.style.display === 'block' ? 'none' : 'block'; });
 
-      document.querySelectorAll('.subtitle-option').forEach(opt => {
-        opt.addEventListener('click', () => {
+      // subtitle menu
+      document.querySelectorAll('.subtitle-option').forEach(opt=>{
+        opt.addEventListener('click', ()=>{
           const sub = opt.dataset.subtitle;
           for (const t of video.textTracks) {
             t.mode = (sub !== 'none' && t.language === sub) ? 'showing' : 'hidden';
@@ -258,100 +250,113 @@
           subtitleMenu.style.display = 'none';
         });
       });
+      subtitleBtn.addEventListener('click', ()=>{ subtitleMenu.style.display = subtitleMenu.style.display === 'block' ? 'none' : 'block'; });
 
-      document.addEventListener('keydown', handleKeyboardShortcuts);
+      // quality menu toggle
+      qualityBtn.addEventListener('click', ()=>{ qualityMenu.style.display = qualityMenu.style.display === 'block' ? 'none' : 'block'; });
+
+      document.addEventListener('keydown', (e)=>{
+        if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+        if (e.key === 'ArrowLeft') { seek(-10); }
+        if (e.key === 'ArrowRight') { seek(10); }
+        if (e.key === 'm' || e.key === 'M') toggleMute();
+        if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+        if (e.key === 'ArrowUp') { video.volume = Math.min(1, video.volume + 0.1); volumeSlider.value = video.volume; }
+        if (e.key === 'ArrowDown') { video.volume = Math.max(0, video.volume - 0.1); volumeSlider.value = video.volume; }
+      });
     }
 
-    /***********************
-     * UI helpers
-     ***********************/
-    function showLoading(msg) {
-      loadingOverlay.style.display = 'flex';
-      loadingText.textContent = msg || 'Loading...';
-    }
-    function hideLoading() {
-      loadingOverlay.style.display = 'none';
-    }
-    function info(text) {
-      infoMsg.style.display = 'block';
-      infoMsg.textContent = text;
-      console.log('[player] ' + text);
-    }
-    function clearInfo() {
-      infoMsg.style.display = 'none';
-      infoMsg.textContent = '';
+    function togglePlay(){ if (video.paused) video.play().catch(()=>{}); else video.pause(); }
+    function updatePlayIcon(){ playPauseBtn.querySelector('i').className = video.paused ? 'fas fa-play' : 'fas fa-pause'; }
+    function seek(sec){ try { video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + sec)); } catch(e){} }
+    function toggleMute(){ if (video.volume > 0) { lastVolume = video.volume; video.volume = 0; volumeSlider.value = 0; } else { video.volume = lastVolume; volumeSlider.value = lastVolume; } }
+    function toggleFullscreen(){ if (!document.fullscreenElement) video.parentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+
+    function updateProgress(){
+      if (!isDragging && video.duration && !isNaN(video.duration)) {
+        const pct = (video.currentTime / video.duration) * 100;
+        progressBar.style.width = pct + '%';
+      }
+      timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+      // save progress occasionally
+      try { if (!isNaN(video.currentTime) && (Math.floor(video.currentTime) % 10 === 0)) localStorage.setItem(saveKey, video.currentTime); } catch(e){}
     }
 
-    /***********************
-     * Load video (universal + robust)
-     ***********************/
-    async function loadVideo(url) {
-      clearInfo();
+    function updateSeekFromEvent(e){
+      const rect = progressContainer.getBoundingClientRect();
+      const x = e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || 0;
+      const pct = Math.max(0, Math.min(1, (x - rect.left) / rect.width));
+      progressBar.style.width = (pct * 100) + '%';
+      if (video.duration) video.currentTime = pct * video.duration;
+    }
 
-      // cleanup existing players
-      if (hls) { try { hls.destroy(); } catch(e) {} hls = null; }
-      if (dashPlayer) { try { dashPlayer.reset(); } catch(e) {} dashPlayer = null; }
+    function formatTime(s){ if (!s || isNaN(s)) return '0:00'; s = Math.floor(s); const m = Math.floor(s/60); const sec = s%60; return `${m}:${sec<10?'0'+sec:sec}`; }
+    function onLoadedMeta(){ hideLoading(); // restore saved position
+      try { const last = localStorage.getItem(saveKey); if (last) video.currentTime = parseFloat(last); } catch(e){} }
 
-      // remove previous tracks
+    function onVideoError(e){
+      console.warn('video element error', e);
+      hideLoading();
+      showInfo('Video element reported an error. See console for details.');
+    }
+
+    /* ============================
+       Core: robust loadVideo (HLS-first, exact URL)
+       ============================ */
+    async function loadVideoFromRaw(rawUrl) {
+      hideInfo();
+      debugUrl(`Player received URL:\n${rawUrl}`);
+      showLoading('Preparing stream...');
+
+      // clean up previous instances & tracks
+      try { if (hls) { hls.destroy(); } } catch(e){}
+      hls = null;
+      try { if (dashPlayer) { dashPlayer.reset(); } } catch(e){}
+      dashPlayer = null;
       Array.from(video.querySelectorAll('track')).forEach(t => t.remove());
+      try { video.pause(); } catch(e) {}
+      try { video.removeAttribute('src'); video.load(); } catch(e){}
 
-      // reset video element
+      // If .txt wrapper, try fetch its content first
       try {
-        video.pause();
-      } catch(e) {}
-      try {
-        video.removeAttribute('src');
-        video.load();
-      } catch(e) {}
-
-      showLoading('Loading video...');
-
-      // If the link is a .txt wrapper, fetch it and use its content
-      try {
-        if (url.toLowerCase().endsWith('.txt')) {
-          const res = await fetch(url);
-          if (!res.ok) { throw new Error('Failed to fetch .txt'); }
-          url = (await res.text()).trim();
+        if (rawUrl.toLowerCase().endsWith('.txt')) {
+          const res = await fetch(rawUrl);
+          if (!res.ok) throw new Error('Failed to fetch .txt wrapper: ' + res.status);
+          rawUrl = (await res.text()).trim();
+          debugUrl(`Unwrapped .txt ->\n${rawUrl}`);
         }
       } catch (err) {
         hideLoading();
-        info('Failed to fetch .txt wrapper: ' + err.message);
+        showInfo('Failed to fetch .txt wrapper: ' + (err.message || err));
         return;
       }
 
-      // Save the original (do not mutate when passing to Hls)
-      const originalUrl = url;
-      const lower = originalUrl.toLowerCase();
-
-      // If subtitle param was passed, attach it (remove earlier tracks first)
-      function attachSubtitles() {
-        if (subtitleParam) {
-          const track = document.createElement('track');
-          track.kind = 'subtitles';
-          track.label = 'English';
-          track.srclang = 'en';
-          track.src = subtitleParam;
-          track.default = true;
-          video.appendChild(track);
-        }
+      // attach subtitles if provided via ?subtitle=
+      if (subtitleParam) {
+        const track = document.createElement('track');
+        track.kind = 'subtitles';
+        track.label = 'English';
+        track.srclang = 'en';
+        track.src = subtitleParam;
+        track.default = true;
+        video.appendChild(track);
+        // update subtitle menu (keep your two options)
       }
 
-      // DASH (.mpd anywhere) — initialize dash.js
-      if (lower.includes('.mpd')) {
+      // If URL looks like DASH (.mpd anywhere) -> try dash.js
+      if (rawUrl.toLowerCase().includes('.mpd')) {
         try {
           dashPlayer = dashjs.MediaPlayer().create();
-          dashPlayer.initialize(video, originalUrl, true);
-          attachSubtitles();
+          dashPlayer.initialize(video, rawUrl, true);
           hideLoading();
           video.play().catch(()=>{});
           return;
         } catch (err) {
           console.warn('dash init failed', err);
-          // fallback to next option
         }
       }
 
-      // Try HLS.js first (pass exact URL)
+      // Try Hls.js (pass EXACT rawUrl)
       if (Hls.isSupported()) {
         try {
           hls = new Hls({
@@ -364,24 +369,24 @@
             backBufferLength: 30
           });
 
-          hls.loadSource(originalUrl); // PASS raw URL (keeps + and =)
+          hls.loadSource(rawUrl); // IMPORTANT: pass raw URL (keeps + and =)
           hls.attachMedia(video);
 
-          const onManifest = (event, data) => {
-            // Populate quality menu based on levels
+          const manifestParsedHandler = (evt, data) => {
+            // populate quality menu based on data.levels
             try {
               const qm = document.getElementById('quality-menu');
               qm.innerHTML = `<div class="quality-option" data-quality="auto">Auto</div>` +
-                (data.levels ? data.levels.map(l => `<div class="quality-option" data-quality="${l.height}">${l.height}p</div>`).join('') : '');
-              // reattach quality click listeners
-              document.querySelectorAll('#quality-menu .quality-option').forEach(option => {
-                option.addEventListener('click', () => {
-                  const q = option.dataset.quality;
+                             (data.levels ? data.levels.map(l => `<div class="quality-option" data-quality="${l.height}">${l.height}p</div>`).join('') : '');
+              // bind quality click handlers
+              document.querySelectorAll('#quality-menu .quality-option').forEach(opt=>{
+                opt.addEventListener('click', ()=> {
+                  const q = opt.dataset.quality;
                   if (hls) {
                     if (q === 'auto') hls.currentLevel = -1;
                     else {
                       const levels = hls.levels;
-                      for (let i = 0; i < levels.length; i++) {
+                      for (let i=0;i<levels.length;i++){
                         if (levels[i].height <= parseInt(q)) { hls.currentLevel = i; break; }
                       }
                     }
@@ -390,21 +395,17 @@
                 });
               });
             } catch(e){}
-            attachSubtitles();
             hideLoading();
-            // resume position if present
-            try {
-              const lastTime = localStorage.getItem(saveKey);
-              if (lastTime) video.currentTime = parseFloat(lastTime);
-            } catch(e){}
+            // resume pos
+            try { const last = localStorage.getItem(saveKey); if (last) video.currentTime = parseFloat(last); } catch(e){}
             video.play().catch(()=>{});
           };
 
-          hls.on(Hls.Events.MANIFEST_PARSED, onManifest);
+          hls.on(Hls.Events.MANIFEST_PARSED, manifestParsedHandler);
 
           hls.on(Hls.Events.ERROR, (event, data) => {
             console.warn('HLS error', data);
-            if (data.fatal) {
+            if (data && data.fatal) {
               switch (data.type) {
                 case Hls.ErrorTypes.NETWORK_ERROR:
                   showLoading('Network error — retrying...');
@@ -415,19 +416,14 @@
                   hls.recoverMediaError();
                   break;
                 default:
-                  // fatal other -> fallback to direct source
+                  // fallback to direct src
                   try { hls.destroy(); } catch(e) {}
                   hls = null;
-                  // fallback to direct
-                  video.src = originalUrl;
-                  attachSubtitles();
-                  video.addEventListener('loadedmetadata', function once() {
-                    this.removeEventListener('loadedmetadata', once);
+                  video.src = rawUrl;
+                  video.addEventListener('loadedmetadata', function onMeta() {
+                    video.removeEventListener('loadedmetadata', onMeta);
                     hideLoading();
-                    try {
-                      const lastTime = localStorage.getItem(saveKey);
-                      if (lastTime) video.currentTime = parseFloat(lastTime);
-                    } catch(e){}
+                    try { const last = localStorage.getItem(saveKey); if (last) video.currentTime = parseFloat(last); } catch(e){}
                     video.play().catch(()=>{});
                   });
                   break;
@@ -435,110 +431,44 @@
             }
           });
 
-          return; // Hls is handling playback
+          return; // Hls will handle playback now
         } catch (err) {
           console.warn('Hls init failed', err);
-          // fallthrough to native attempt
+          // fall through to native fallback below
         }
       }
 
-      // Safari native HLS or direct playback fallback
+      // Safari native handling or final fallback: assign to video.src
       try {
-        video.src = originalUrl;
-        attachSubtitles();
-        // on loadedmetadata: hide overlay and play
-        const handler = function() {
-          video.removeEventListener('loadedmetadata', handler);
+        video.src = rawUrl;
+        const onMeta = () => {
+          video.removeEventListener('loadedmetadata', onMeta);
           hideLoading();
-          try {
-            const lastTime = localStorage.getItem(saveKey);
-            if (lastTime) video.currentTime = parseFloat(lastTime);
-          } catch(e){}
+          try { const last = localStorage.getItem(saveKey); if (last) video.currentTime = parseFloat(last); } catch(e){}
           video.play().catch(()=>{});
         };
-        video.addEventListener('loadedmetadata', handler);
+        video.addEventListener('loadedmetadata', onMeta);
         video.load();
       } catch (err) {
         hideLoading();
-        info('Playback failed: ' + (err && err.message ? err.message : String(err)));
+        showInfo('Playback failed: ' + (err.message || err));
       }
     }
 
-    /***********************
-     * Controls & progress
-     ***********************/
-    function togglePlayPause(){ if (video.paused) video.play(); else video.pause(); }
-    function updatePlayPauseIcon(){ playPauseBtn.querySelector('i').className = video.paused ? 'fas fa-play' : 'fas fa-pause'; }
-    function seek(s){ try { video.currentTime = Math.max(0, Math.min(video.duration || Infinity, video.currentTime + s)); } catch(e){} }
-    function toggleMute(){ if (video.volume > 0) { lastVolume = video.volume; video.volume = 0; volumeSlider.value = 0; } else { video.volume = lastVolume; volumeSlider.value = lastVolume; } }
-    function updateVolume(){ const v = parseFloat(this.value || event.target.value); video.volume = v; lastVolume = v; }
-    function updateVolumeIcon(){ /* optional more complex icon logic */ }
-
-    function toggleFullscreen(){
-      if (!document.fullscreenElement) videoContainer.requestFullscreen ? videoContainer.requestFullscreen() : null;
-      else document.exitFullscreen ? document.exitFullscreen() : null;
-    }
-
-    // Progress dragging
-    function startDraggingProgress(e){ e.preventDefault(); isDraggingProgress = true; updateProgressOnDrag(e); }
-    function dragProgress(e){ if (isDraggingProgress) updateProgressOnDrag(e); }
-    function stopDraggingProgress(){ isDraggingProgress = false; }
-    function updateProgressOnDrag(e){
-      const rect = progressContainer.getBoundingClientRect();
-      const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
-      const pos = clientX - rect.left;
-      const pct = Math.max(0, Math.min(1, pos / rect.width));
-      progressBar.style.width = (pct * 100) + '%';
-      if (!isNaN(video.duration) && video.duration > 0) video.currentTime = pct * video.duration;
-    }
-
-    function updateProgress(){
-      if (!isDraggingProgress && video.duration) {
-        const pct = (video.currentTime / video.duration) * 100;
-        progressBar.style.width = pct + '%';
+    /* ============================
+       Boot
+       ============================ */
+    document.addEventListener('DOMContentLoaded', ()=>{
+      setupControls();
+      if (!rawVideo) {
+        showLoading('No video provided');
+        showInfo('No ?video= found in URL. Provide ?video=rawURL (the player preserves + and = characters).');
+        return;
       }
-      const cur = formatTime(video.currentTime || 0);
-      const dur = formatTime(video.duration || 0);
-      document.getElementById('time-display').textContent = `${cur} / ${dur}`;
-      // save progress occasionally
-      try {
-        if (video.currentTime && (video.currentTime % 10 < 0.5)) {
-          localStorage.setItem(saveKey, video.currentTime);
-        }
-      } catch(e) {}
-    }
-    function updateDuration(){ document.getElementById('time-display').textContent = `${formatTime(video.currentTime||0)} / ${formatTime(video.duration||0)}`; }
-    function formatTime(s){ if (!s || isNaN(s)) return '0:00'; s = Math.floor(s); const m = Math.floor(s/60); const sec = s%60; return `${m}:${sec<10?'0'+sec:sec}`; }
-
-    function toggleMenu(menu){ menu.style.display = (menu.style.display === 'block' ? 'none' : 'block'); }
-
-    function handleKeyboardShortcuts(e){
-      switch (e.key) {
-        case ' ': e.preventDefault(); togglePlayPause(); break;
-        case 'ArrowLeft': seek(-10); break;
-        case 'ArrowRight': seek(10); break;
-        case 'ArrowUp': video.volume = Math.min(1, (video.volume || 0) + 0.1); volumeSlider.value = video.volume; break;
-        case 'ArrowDown': video.volume = Math.max(0, (video.volume || 0) - 0.1); volumeSlider.value = video.volume; break;
-        case 'f': case 'F': toggleFullscreen(); break;
-        case 'm': case 'M': toggleMute(); break;
-      }
-    }
-
-    // Save on exit
-    window.addEventListener('beforeunload', () => {
-      try { if (!isNaN(video.currentTime)) localStorage.setItem(saveKey, video.currentTime); } catch(e){}
+      // show the exact raw URL for debugging (you can remove this later)
+      debugUrl(`raw video param:\n${rawVideo}`);
+      loadVideoFromRaw(rawVideo);
     });
-
-    // Hide overlay when playable
-    video.addEventListener('canplay', () => { try { hideLoading(); } catch(e){} });
-    video.addEventListener('error', (ev) => {
-      console.warn('video element error', ev);
-      hideLoading();
-      info('Playback error (see console).');
-    });
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', initPlayer);
   </script>
 </body>
 </html>
