@@ -1,44 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Universal Web Player</title>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
-  <style>
-    body{background:#0b0b0b;color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;padding:18px;display:flex;flex-direction:column;align-items:center;}
-    .container{width:100%;max-width:980px;}
-    .top{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
-    input[type="text"]{flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#0f1724;color:#fff}
-    button{padding:10px 14px;border-radius:8px;border:none;background:#f59e0b;color:#0b0b0b;cursor:pointer}
-    .video-wrap{position:relative;padding-top:56.25%;background:#000;border-radius:12px;overflow:hidden;border:3px solid #111;margin-top:14px;}
-    video{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;outline:none;}
-    #loading-overlay{position:absolute;inset:0;background:rgba(2,6,23,.9);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:5;color:#f59e0b;font-weight:600}
-    @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-    .spinner{width:40px;height:40px;border:4px solid #333;border-top-color:#f59e0b;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:12px}
-    .hint{font-size:13px;color:#94a3b8;margin-top:8px}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Universal Player</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+<style>
+body{background:#0b0b0b;color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;padding:18px;display:flex;flex-direction:column;align-items:center;}
+.container{width:100%;max-width:980px;}
+.top{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
+input[type="text"]{flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#0f1724;color:#fff}
+button{padding:10px 14px;border-radius:8px;border:none;background:#f59e0b;color:#0b0b0b;cursor:pointer}
+.video-wrap{position:relative;padding-top:56.25%;background:#000;border-radius:12px;overflow:hidden;border:3px solid #111;margin-top:14px;}
+video{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;outline:none;}
+#loading-overlay{position:absolute;inset:0;background:rgba(2,6,23,.9);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:5;color:#f59e0b;font-weight:600}
+@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+.spinner{width:40px;height:40px;border:4px solid #333;border-top-color:#f59e0b;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:12px}
+.hint{font-size:13px;color:#94a3b8;margin-top:8px}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h2 style="margin:0;color:#f59e0b">Universal Web Player</h2>
+<div class="container">
+  <h2 style="margin:0;color:#f59e0b">Universal Player</h2>
 
-    <div class="top">
-      <input id="video-url-input" type="text" placeholder="Paste .mp4 .m3u8 .mpd or .txt link here"/>
-      <button id="load-btn">Load & Play</button>
-    </div>
-
-    <div class="hint">Also works with ?video=… in the URL. Supports MP4, HLS (.m3u8), DASH (.mpd) and text files containing a URL.</div>
-
-    <div class="video-wrap" id="video-wrap">
-      <div id="loading-overlay">
-        <div class="spinner"></div>
-        <div id="loading-text">Loading video…</div>
-      </div>
-      <video id="video" controls autoplay playsinline crossorigin="anonymous"></video>
-    </div>
+  <div class="top">
+    <input id="video-url-input" type="text" placeholder="Paste any link (.m3u8 .mp4 .mpd .txt etc.)"/>
+    <button id="load-btn">Load & Play</button>
   </div>
+
+  <div class="hint">Also works with ?video=… in the URL.</div>
+
+  <div class="video-wrap">
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <div id="loading-text">Loading video…</div>
+    </div>
+    <video id="video" controls autoplay playsinline crossorigin="anonymous"></video>
+  </div>
+</div>
 
 <script>
 const video=document.getElementById('video');
@@ -50,13 +50,10 @@ let hls,dashPlayer;
 function showOverlay(msg){overlay.style.display='flex';document.getElementById('loading-text').textContent=msg;}
 function hideOverlay(){overlay.style.display='none';}
 
-function getQueryParam(name){
-  const params=new URLSearchParams(window.location.search);
-  return params.get(name);
-}
+function getQueryParam(name){return new URLSearchParams(window.location.search).get(name);}
 
 async function playVideo(url){
-  // reset previous
+  // clean up
   if(hls){hls.destroy();hls=null;}
   if(dashPlayer){dashPlayer.reset();dashPlayer=null;}
   video.pause();
@@ -64,39 +61,45 @@ async function playVideo(url){
   video.load();
   showOverlay('Loading video…');
 
-  // if .txt fetch its content
+  // .txt fetch
   if(url.toLowerCase().endsWith('.txt')){
     try{
       const res=await fetch(url);
       url=(await res.text()).trim();
-    }catch(e){
-      alert('Failed to load .txt file');
-      hideOverlay();
-      return;
-    }
+    }catch(e){alert('Failed to load .txt file');hideOverlay();return;}
   }
 
   const lower=url.toLowerCase();
-  if(lower.includes('.m3u8')){
-    // HLS
-    if(Hls.isSupported()){
-      hls=new Hls();
-      hls.loadSource(url);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play());
-      hls.on(Hls.Events.ERROR,(event,data)=>{
-        if(data.fatal) alert('HLS error: '+data.details);
-      });
-    }else if(video.canPlayType('application/vnd.apple.mpegurl')){
-      video.src=url;
-      video.addEventListener('loadedmetadata',()=>video.play());
-    }
-  }else if(lower.includes('.mpd')){
-    // DASH
+
+  // try DASH first
+  if(lower.includes('.mpd')){
     dashPlayer=dashjs.MediaPlayer().create();
     dashPlayer.initialize(video,url,true);
+    hideOverlay();
+    return;
+  }
+
+  // try HLS.js first (works for any HLS playlist even with weird URL)
+  if(Hls.isSupported()){
+    hls=new Hls();
+    hls.loadSource(url);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play());
+    hls.on(Hls.Events.ERROR,(event,data)=>{
+      if(data.fatal){
+        // fallback to direct src if HLS fails
+        hls.destroy();
+        hls=null;
+        video.src=url;
+        video.addEventListener('loadedmetadata',()=>video.play());
+      }
+    });
+  }else if(video.canPlayType('application/vnd.apple.mpegurl')){
+    // Safari native HLS
+    video.src=url;
+    video.addEventListener('loadedmetadata',()=>video.play());
   }else{
-    // direct MP4 / WebM etc.
+    // direct MP4/WebM etc.
     video.src=url;
     video.addEventListener('loadedmetadata',()=>video.play());
     video.load();
@@ -111,7 +114,7 @@ loadBtn.addEventListener('click',()=>{
   if(url) playVideo(url);
 });
 
-// auto load from ?video=
+// auto-load ?video=
 window.addEventListener('load',()=>{
   let qlink=getQueryParam('video');
   if(qlink){
