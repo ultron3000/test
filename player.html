@@ -8,7 +8,6 @@
   <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* --- preserved styling from your original --- */
     @keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
     .loading-spinner{animation:spin 1s linear infinite;}
     .video-container{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;background:#000;border-radius:0.75rem;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);}
@@ -29,8 +28,6 @@
     .header h1{color:#f59e0b;margin:0}
     .header a{color:#94a3b8;text-decoration:none}
     .container{width:100%;max-width:1100px;margin:0 auto}
-    #info-bar{margin-top:10px;color:#ffb4a2;font-size:13px;display:none;white-space:break-spaces;}
-    .debug-url{font-size:12px;color:#9ca3af;word-break:break-all;margin-top:8px;}
   </style>
 </head>
 <body>
@@ -49,7 +46,7 @@
 
       <video id="video" crossorigin="anonymous" playsinline></video>
 
-      <!-- Controls (kept from your original) -->
+      <!-- Controls -->
       <div id="controls-container" class="controls-container" style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg, rgba(0,0,0,0.75), transparent);padding:12px;opacity:1">
         <div class="progress-container" id="progress-container"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
 
@@ -102,69 +99,19 @@
         </div>
       </div>
     </div>
-
-    <div id="info-bar"></div>
-    <div class="debug-url" id="debug-url"></div>
   </div>
 
   <script>
-    /* ============================
-       Robust parameter extraction
-       - preserves +, = and long raw video values
-       ============================ */
-    function getRawVideoParam() {
-      // Try URLSearchParams first
-      const params = new URLSearchParams(window.location.search);
-      const p = params.get('video');
-      if (p) return p; // normally decoded as returned by browser
-
-      // Fallback: extract raw substring after 'video=' in full href
-      const href = window.location.href;
-      const idx = href.indexOf('video=');
-      if (idx === -1) return null;
-      let raw = href.substring(idx + 6);
-
-      // Stop at other known params or hash
-      const cut = raw.search(/(&title=|&subtitle=|&autoplay=|&mode=|&utm_|#)/i);
-      if (cut !== -1) raw = raw.substring(0, cut);
-
-      // Try decodeURIComponent safely (if it was encoded)
-      try {
-        const dec = decodeURIComponent(raw);
-        if (dec && dec.length > 0) raw = dec;
-      } catch (e) {
-        // keep raw if decode fails
-      }
-
-      // If plus signs got turned into spaces accidentally, restore heuristically
-      if (raw.includes(' ')) {
-        const maybePlus = raw.replace(/ /g, '+');
-        if (maybePlus.startsWith('http') || maybePlus.includes('.m3u8') || maybePlus.includes('.mp4')) {
-          raw = maybePlus;
-        }
-      }
-
-      return raw;
-    }
-
-    /* ============================
-       DOM & parameters
-       ============================ */
     const params = new URLSearchParams(window.location.search);
     const titleParam = params.get('title');
-    const subtitleParam = params.get('subtitle');
-    const rawVideo = getRawVideoParam(); // this preserves exact characters
-    const saveKey = `continue-${titleParam||'video'}`;
+    let videoUrl = params.get('video');
 
-    // DOM
-    const movieTitle = document.getElementById('movie-title');
+    if (titleParam) document.getElementById('movie-title').textContent = titleParam;
+
     const video = document.getElementById('video');
     const loadingOverlay = document.getElementById('loading-overlay');
-    const loadingText = document.getElementById('loading-text');
-    const loadingDetails = document.getElementById('loading-details');
-    const infoBar = document.getElementById('info-bar');
-    const debugUrlEl = document.getElementById('debug-url');
-
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
     const playPauseBtn = document.getElementById('play-pause');
     const rewindBtn = document.getElementById('rewind');
     const forwardBtn = document.getElementById('forward');
@@ -177,8 +124,6 @@
     const qualityBtn = document.getElementById('quality-btn');
     const qualityMenu = document.getElementById('quality-menu');
     const fullscreenBtn = document.getElementById('fullscreen-btn');
-    const progressContainer = document.getElementById('progress-container');
-    const progressBar = document.getElementById('progress-bar');
     const timeDisplay = document.getElementById('time-display');
 
     let hls = null;
@@ -186,289 +131,79 @@
     let isDragging = false;
     let lastVolume = 1;
 
-    if (titleParam) movieTitle.textContent = titleParam;
-
     function showLoading(msg) {
       loadingOverlay.style.display = 'flex';
-      loadingText.textContent = msg || 'Loading movie...';
+      document.getElementById('loading-text').textContent = msg || 'Loading movie...';
     }
-    function hideLoading() {
-      loadingOverlay.style.display = 'none';
-    }
-    function showInfo(msg) {
-      infoBar.style.display = 'block';
-      infoBar.textContent = msg;
-    }
-    function hideInfo() {
-      infoBar.style.display = 'none';
-      infoBar.textContent = '';
-    }
-    function debugUrl(msg) {
-      debugUrlEl.style.display = 'block';
-      debugUrlEl.textContent = msg;
-    }
+    function hideLoading() { loadingOverlay.style.display = 'none'; }
 
-    /* ============================
-       Player initialization & controls
-       ============================ */
-    function setupControls() {
-      video.addEventListener('timeupdate', updateProgress);
-      video.addEventListener('loadedmetadata', onLoadedMeta);
-      video.addEventListener('play', updatePlayIcon);
-      video.addEventListener('pause', updatePlayIcon);
-      video.addEventListener('error', onVideoError);
+    async function loadVideo(url) {
+      if (hls) { try{hls.destroy();}catch(e){} hls=null;}
+      if (dashPlayer){ try{dashPlayer.reset();}catch(e){} dashPlayer=null;}
+      try{video.pause();}catch(e){}
+      video.removeAttribute('src'); video.load();
+      showLoading('Loading movie…');
 
-      playPauseBtn.addEventListener('click', togglePlay);
-      rewindBtn.addEventListener('click', ()=>seek(-10));
-      forwardBtn.addEventListener('click', ()=>seek(10));
-      volumeBtn.addEventListener('click', toggleMute);
-      volumeSlider.addEventListener('input', (e)=>{video.volume = parseFloat(e.target.value); lastVolume = video.volume;});
-      fullscreenBtn.addEventListener('click', toggleFullscreen);
-
-      progressContainer.addEventListener('mousedown', (e)=>{ isDragging=true; updateSeekFromEvent(e); });
-      document.addEventListener('mousemove', (e)=>{ if(isDragging) updateSeekFromEvent(e); });
-      document.addEventListener('mouseup', ()=>{ isDragging=false; });
-
-      // speed menu
-      document.querySelectorAll('.speed-option').forEach(opt=>{
-        opt.addEventListener('click', ()=>{
-          const s = parseFloat(opt.dataset.speed);
-          video.playbackRate = s;
-          speedBtn.textContent = `${s}x`;
-          speedMenu.style.display = 'none';
-        });
-      });
-      speedBtn.addEventListener('click', ()=>{ speedMenu.style.display = speedMenu.style.display === 'block' ? 'none' : 'block'; });
-
-      // subtitle menu
-      document.querySelectorAll('.subtitle-option').forEach(opt=>{
-        opt.addEventListener('click', ()=>{
-          const sub = opt.dataset.subtitle;
-          for (const t of video.textTracks) {
-            t.mode = (sub !== 'none' && t.language === sub) ? 'showing' : 'hidden';
-          }
-          subtitleMenu.style.display = 'none';
-        });
-      });
-      subtitleBtn.addEventListener('click', ()=>{ subtitleMenu.style.display = subtitleMenu.style.display === 'block' ? 'none' : 'block'; });
-
-      // quality menu toggle
-      qualityBtn.addEventListener('click', ()=>{ qualityMenu.style.display = qualityMenu.style.display === 'block' ? 'none' : 'block'; });
-
-      document.addEventListener('keydown', (e)=>{
-        if (e.key === ' ') { e.preventDefault(); togglePlay(); }
-        if (e.key === 'ArrowLeft') { seek(-10); }
-        if (e.key === 'ArrowRight') { seek(10); }
-        if (e.key === 'm' || e.key === 'M') toggleMute();
-        if (e.key === 'f' || e.key === 'F') toggleFullscreen();
-        if (e.key === 'ArrowUp') { video.volume = Math.min(1, video.volume + 0.1); volumeSlider.value = video.volume; }
-        if (e.key === 'ArrowDown') { video.volume = Math.max(0, video.volume - 0.1); volumeSlider.value = video.volume; }
-      });
-    }
-
-    function togglePlay(){ if (video.paused) video.play().catch(()=>{}); else video.pause(); }
-    function updatePlayIcon(){ playPauseBtn.querySelector('i').className = video.paused ? 'fas fa-play' : 'fas fa-pause'; }
-    function seek(sec){ try { video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + sec)); } catch(e){} }
-    function toggleMute(){ if (video.volume > 0) { lastVolume = video.volume; video.volume = 0; volumeSlider.value = 0; } else { video.volume = lastVolume; volumeSlider.value = lastVolume; } }
-    function toggleFullscreen(){ if (!document.fullscreenElement) video.parentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
-
-    function updateProgress(){
-      if (!isDragging && video.duration && !isNaN(video.duration)) {
-        const pct = (video.currentTime / video.duration) * 100;
-        progressBar.style.width = pct + '%';
+      if (url.toLowerCase().endsWith('.txt')) {
+        const res = await fetch(url);
+        url = (await res.text()).trim();
       }
-      timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
-      // save progress occasionally
-      try { if (!isNaN(video.currentTime) && (Math.floor(video.currentTime) % 10 === 0)) localStorage.setItem(saveKey, video.currentTime); } catch(e){}
-    }
 
-    function updateSeekFromEvent(e){
-      const rect = progressContainer.getBoundingClientRect();
-      const x = e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || 0;
-      const pct = Math.max(0, Math.min(1, (x - rect.left) / rect.width));
-      progressBar.style.width = (pct * 100) + '%';
-      if (video.duration) video.currentTime = pct * video.duration;
-    }
-
-    function formatTime(s){ if (!s || isNaN(s)) return '0:00'; s = Math.floor(s); const m = Math.floor(s/60); const sec = s%60; return `${m}:${sec<10?'0'+sec:sec}`; }
-    function onLoadedMeta(){ hideLoading(); // restore saved position
-      try { const last = localStorage.getItem(saveKey); if (last) video.currentTime = parseFloat(last); } catch(e){} }
-
-    function onVideoError(e){
-      console.warn('video element error', e);
-      hideLoading();
-      showInfo('Video element reported an error. See console for details.');
-    }
-
-    /* ============================
-       Core: robust loadVideo (HLS-first, exact URL)
-       ============================ */
-    async function loadVideoFromRaw(rawUrl) {
-      hideInfo();
-      debugUrl(`Player received URL:\n${rawUrl}`);
-      showLoading('Preparing stream...');
-
-      // clean up previous instances & tracks
-      try { if (hls) { hls.destroy(); } } catch(e){}
-      hls = null;
-      try { if (dashPlayer) { dashPlayer.reset(); } } catch(e){}
-      dashPlayer = null;
-      Array.from(video.querySelectorAll('track')).forEach(t => t.remove());
-      try { video.pause(); } catch(e) {}
-      try { video.removeAttribute('src'); video.load(); } catch(e){}
-
-      // If .txt wrapper, try fetch its content first
-      try {
-        if (rawUrl.toLowerCase().endsWith('.txt')) {
-          const res = await fetch(rawUrl);
-          if (!res.ok) throw new Error('Failed to fetch .txt wrapper: ' + res.status);
-          rawUrl = (await res.text()).trim();
-          debugUrl(`Unwrapped .txt ->\n${rawUrl}`);
-        }
-      } catch (err) {
+      if (url.toLowerCase().includes('.mpd')) {
+        dashPlayer = dashjs.MediaPlayer().create();
+        dashPlayer.initialize(video, url, true);
         hideLoading();
-        showInfo('Failed to fetch .txt wrapper: ' + (err.message || err));
+        video.play().catch(()=>{});
         return;
       }
 
-      // attach subtitles if provided via ?subtitle=
-      if (subtitleParam) {
-        const track = document.createElement('track');
-        track.kind = 'subtitles';
-        track.label = 'English';
-        track.srclang = 'en';
-        track.src = subtitleParam;
-        track.default = true;
-        video.appendChild(track);
-        // update subtitle menu (keep your two options)
-      }
-
-      // If URL looks like DASH (.mpd anywhere) -> try dash.js
-      if (rawUrl.toLowerCase().includes('.mpd')) {
-        try {
-          dashPlayer = dashjs.MediaPlayer().create();
-          dashPlayer.initialize(video, rawUrl, true);
-          hideLoading();
-          video.play().catch(()=>{});
-          return;
-        } catch (err) {
-          console.warn('dash init failed', err);
-        }
-      }
-
-      // Try Hls.js (pass EXACT rawUrl)
       if (Hls.isSupported()) {
-        try {
-          hls = new Hls({
-            maxBufferLength: 30,
-            maxMaxBufferLength: 600,
-            maxBufferSize: 60 * 1000 * 1000,
-            maxBufferHole: 0.5,
-            enableWorker: true,
-            lowLatencyMode: false,
-            backBufferLength: 30
-          });
-
-          hls.loadSource(rawUrl); // IMPORTANT: pass raw URL (keeps + and =)
-          hls.attachMedia(video);
-
-          const manifestParsedHandler = (evt, data) => {
-            // populate quality menu based on data.levels
-            try {
-              const qm = document.getElementById('quality-menu');
-              qm.innerHTML = `<div class="quality-option" data-quality="auto">Auto</div>` +
-                             (data.levels ? data.levels.map(l => `<div class="quality-option" data-quality="${l.height}">${l.height}p</div>`).join('') : '');
-              // bind quality click handlers
-              document.querySelectorAll('#quality-menu .quality-option').forEach(opt=>{
-                opt.addEventListener('click', ()=> {
-                  const q = opt.dataset.quality;
-                  if (hls) {
-                    if (q === 'auto') hls.currentLevel = -1;
-                    else {
-                      const levels = hls.levels;
-                      for (let i=0;i<levels.length;i++){
-                        if (levels[i].height <= parseInt(q)) { hls.currentLevel = i; break; }
-                      }
-                    }
-                  }
-                  qualityMenu.style.display = 'none';
-                });
-              });
-            } catch(e){}
-            hideLoading();
-            // resume pos
-            try { const last = localStorage.getItem(saveKey); if (last) video.currentTime = parseFloat(last); } catch(e){}
-            video.play().catch(()=>{});
-          };
-
-          hls.on(Hls.Events.MANIFEST_PARSED, manifestParsedHandler);
-
-          hls.on(Hls.Events.ERROR, (event, data) => {
-            console.warn('HLS error', data);
-            if (data && data.fatal) {
-              switch (data.type) {
-                case Hls.ErrorTypes.NETWORK_ERROR:
-                  showLoading('Network error — retrying...');
-                  hls.startLoad();
-                  break;
-                case Hls.ErrorTypes.MEDIA_ERROR:
-                  showLoading('Media error — trying to recover...');
-                  hls.recoverMediaError();
-                  break;
-                default:
-                  // fallback to direct src
-                  try { hls.destroy(); } catch(e) {}
-                  hls = null;
-                  video.src = rawUrl;
-                  video.addEventListener('loadedmetadata', function onMeta() {
-                    video.removeEventListener('loadedmetadata', onMeta);
-                    hideLoading();
-                    try { const last = localStorage.getItem(saveKey); if (last) video.currentTime = parseFloat(last); } catch(e){}
-                    video.play().catch(()=>{});
-                  });
-                  break;
-              }
-            }
-          });
-
-          return; // Hls will handle playback now
-        } catch (err) {
-          console.warn('Hls init failed', err);
-          // fall through to native fallback below
-        }
-      }
-
-      // Safari native handling or final fallback: assign to video.src
-      try {
-        video.src = rawUrl;
-        const onMeta = () => {
-          video.removeEventListener('loadedmetadata', onMeta);
-          hideLoading();
-          try { const last = localStorage.getItem(saveKey); if (last) video.currentTime = parseFloat(last); } catch(e){}
-          video.play().catch(()=>{});
-        };
-        video.addEventListener('loadedmetadata', onMeta);
+        hls = new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED,()=>{hideLoading();video.play().catch(()=>{});});
+        hls.on(Hls.Events.ERROR,(event,data)=>{
+          if (data.fatal) {
+            try{hls.destroy();}catch(e){}
+            hls=null;
+            video.src=url;
+            video.addEventListener('loadedmetadata',function once(){video.removeEventListener('loadedmetadata',once);hideLoading();video.play().catch(()=>{});});
+          }
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src=url;
+        video.addEventListener('loadedmetadata',function once(){video.removeEventListener('loadedmetadata',once);hideLoading();video.play().catch(()=>{});});
+      } else {
+        video.src=url;
+        video.addEventListener('loadedmetadata',function once(){video.removeEventListener('loadedmetadata',once);hideLoading();video.play().catch(()=>{});});
         video.load();
-      } catch (err) {
-        hideLoading();
-        showInfo('Playback failed: ' + (err.message || err));
       }
     }
 
-    /* ============================
-       Boot
-       ============================ */
-    document.addEventListener('DOMContentLoaded', ()=>{
-      setupControls();
-      if (!rawVideo) {
-        showLoading('No video provided');
-        showInfo('No ?video= found in URL. Provide ?video=rawURL (the player preserves + and = characters).');
-        return;
-      }
-      // show the exact raw URL for debugging (you can remove this later)
-      debugUrl(`raw video param:\n${rawVideo}`);
-      loadVideoFromRaw(rawVideo);
+    playPauseBtn.addEventListener('click',()=>{if(video.paused)video.play().catch(()=>{});else video.pause();});
+    rewindBtn.addEventListener('click',()=>{video.currentTime=Math.max(0,video.currentTime-10);});
+    forwardBtn.addEventListener('click',()=>{video.currentTime=Math.min(video.duration,video.currentTime+10);});
+    volumeBtn.addEventListener('click',()=>{if(video.volume>0){lastVolume=video.volume;video.volume=0;volumeSlider.value=0;}else{video.volume=lastVolume;volumeSlider.value=lastVolume;}});
+    volumeSlider.addEventListener('input',(e)=>{video.volume=parseFloat(e.target.value);lastVolume=video.volume;});
+    fullscreenBtn.addEventListener('click',()=>{if(!document.fullscreenElement)video.parentElement.requestFullscreen?.();else document.exitFullscreen?.();});
+    video.addEventListener('timeupdate',()=>{if(!isDragging&&video.duration){progressBar.style.width=(video.currentTime/video.duration)*100+'%';}timeDisplay.textContent=formatTime(video.currentTime)+' / '+formatTime(video.duration);});
+    progressContainer.addEventListener('mousedown',(e)=>{isDragging=true;updateSeek(e);});
+    document.addEventListener('mousemove',(e)=>{if(isDragging)updateSeek(e);});
+    document.addEventListener('mouseup',()=>{isDragging=false;});
+    function updateSeek(e){const rect=progressContainer.getBoundingClientRect();const pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));progressBar.style.width=pct*100+'%';if(video.duration)video.currentTime=pct*video.duration;}
+    function formatTime(s){if(!s||isNaN(s))return'0:00';s=Math.floor(s);const m=Math.floor(s/60);const sec=s%60;return`${m}:${sec<10?'0'+sec:sec}`;}
+
+    document.querySelectorAll('.speed-option').forEach(opt=>{
+      opt.addEventListener('click',()=>{const sp=parseFloat(opt.dataset.speed);video.playbackRate=sp;speedBtn.textContent=`${sp}x`;speedMenu.style.display='none';});
     });
+    speedBtn.addEventListener('click',()=>{speedMenu.style.display=speedMenu.style.display==='block'?'none':'block';});
+    document.querySelectorAll('.subtitle-option').forEach(opt=>{
+      opt.addEventListener('click',()=>{const sub=opt.dataset.subtitle;for(const t of video.textTracks){t.mode=(sub!=='none'&&t.language===sub)?'showing':'hidden';}subtitleMenu.style.display='none';});
+    });
+    subtitleBtn.addEventListener('click',()=>{subtitleMenu.style.display=subtitleMenu.style.display==='block'?'none':'block';});
+    qualityBtn.addEventListener('click',()=>{qualityMenu.style.display=qualityMenu.style.display==='block'?'none':'block';});
+
+    window.addEventListener('load',()=>{if(videoUrl){loadVideo(videoUrl);}});
   </script>
 </body>
 </html>
