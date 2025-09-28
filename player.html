@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Universal Movie Player</title>
+  <title>Universal Web Player</title>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
   <style>
     body{background:#0b0b0b;color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;padding:18px;display:flex;flex-direction:column;align-items:center;}
     .container{width:100%;max-width:980px;}
@@ -17,22 +18,18 @@
     @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
     .spinner{width:40px;height:40px;border:4px solid #333;border-top-color:#f59e0b;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:12px}
     .hint{font-size:13px;color:#94a3b8;margin-top:8px}
-    a.back{color:#94a3b8;text-decoration:none}
   </style>
 </head>
 <body>
   <div class="container">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <h2 style="margin:0;color:#f59e0b">Universal Movie Player</h2>
-      <a class="back" href="index.html">&larr; Back</a>
-    </div>
+    <h2 style="margin:0;color:#f59e0b">Universal Web Player</h2>
 
     <div class="top">
-      <input id="video-url-input" type="text" placeholder="Paste full .mp4 or .m3u8 link here (include the &... parts)."/>
+      <input id="video-url-input" type="text" placeholder="Paste .mp4 .m3u8 .mpd or .txt link here"/>
       <button id="load-btn">Load & Play</button>
     </div>
 
-    <div class="hint">Tip: If you use ?video=... in the URL, the player will auto-load it.</div>
+    <div class="hint">Also works with ?video=… in the URL. Supports MP4, HLS (.m3u8), DASH (.mpd) and text files containing a URL.</div>
 
     <div class="video-wrap" id="video-wrap">
       <div id="loading-overlay">
@@ -48,27 +45,27 @@ const video=document.getElementById('video');
 const overlay=document.getElementById('loading-overlay');
 const input=document.getElementById('video-url-input');
 const loadBtn=document.getElementById('load-btn');
-let hls;
+let hls,dashPlayer;
 
 function showOverlay(msg){overlay.style.display='flex';document.getElementById('loading-text').textContent=msg;}
 function hideOverlay(){overlay.style.display='none';}
 
 function getQueryParam(name){
-  const q=window.location.search;
-  const params=new URLSearchParams(q);
+  const params=new URLSearchParams(window.location.search);
   return params.get(name);
 }
 
 async function playVideo(url){
   // reset previous
   if(hls){hls.destroy();hls=null;}
+  if(dashPlayer){dashPlayer.reset();dashPlayer=null;}
   video.pause();
   video.removeAttribute('src');
   video.load();
   showOverlay('Loading video…');
 
-  // if url is .txt fetch its content
-  if(url.endsWith('.txt')){
+  // if .txt fetch its content
+  if(url.toLowerCase().endsWith('.txt')){
     try{
       const res=await fetch(url);
       url=(await res.text()).trim();
@@ -79,18 +76,27 @@ async function playVideo(url){
     }
   }
 
-  if(Hls.isSupported() && url.toLowerCase().includes('.m3u8')){
-    hls=new Hls();
-    hls.loadSource(url);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED,()=>{video.play();});
-    hls.on(Hls.Events.ERROR,(event,data)=>{
-      if(data.fatal) alert('HLS error: '+data.details);
-    });
-  }else if(video.canPlayType('application/vnd.apple.mpegurl')){
-    video.src=url;
-    video.addEventListener('loadedmetadata',()=>video.play());
+  const lower=url.toLowerCase();
+  if(lower.includes('.m3u8')){
+    // HLS
+    if(Hls.isSupported()){
+      hls=new Hls();
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play());
+      hls.on(Hls.Events.ERROR,(event,data)=>{
+        if(data.fatal) alert('HLS error: '+data.details);
+      });
+    }else if(video.canPlayType('application/vnd.apple.mpegurl')){
+      video.src=url;
+      video.addEventListener('loadedmetadata',()=>video.play());
+    }
+  }else if(lower.includes('.mpd')){
+    // DASH
+    dashPlayer=dashjs.MediaPlayer().create();
+    dashPlayer.initialize(video,url,true);
   }else{
+    // direct MP4 / WebM etc.
     video.src=url;
     video.addEventListener('loadedmetadata',()=>video.play());
     video.load();
@@ -109,7 +115,6 @@ loadBtn.addEventListener('click',()=>{
 window.addEventListener('load',()=>{
   let qlink=getQueryParam('video');
   if(qlink){
-    // decode if encoded
     qlink=decodeURIComponent(qlink);
     input.value=qlink;
     playVideo(qlink);
