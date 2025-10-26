@@ -2,32 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>Men in Black</title>
-  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>Men in Black Universe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
   <style>
-    .hidden { display: none; }
+    body { background: black; color: #eee; font-family: sans-serif; }
 
-    ::-webkit-scrollbar { width: 10px; height: 10px; }
-    ::-webkit-scrollbar-track { background: #111; }
-    ::-webkit-scrollbar-thumb { background: #ffcc00; border-radius: 5px; }
-    ::-webkit-scrollbar-thumb:hover { background: #ffdd33; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Modal layer always on top and clickable */
+    #playerModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
     }
-    .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    #playerModal.active { display: flex; }
+    #playerModal video { pointer-events: auto; max-width: 90%; max-height: 80vh; border-radius: 8px; }
 
-    .movie-poster {
-      transition: all 0.3s ease;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
-    .movie-poster:hover {
-      transform: translateY(-10px) scale(1.03);
-      box-shadow: 0 15px 30px rgba(255,204,0,0.2);
+    #closeModal {
+      position: absolute;
+      top: 20px; right: 30px;
+      font-size: 2rem;
+      color: #ffcc00;
+      cursor: pointer;
+      z-index: 100000;
     }
 
     .spinner {
@@ -36,93 +38,53 @@
       border-top: 4px solid #ffcc00;
       width: 40px; height: 40px;
       animation: spin 1s linear infinite;
-      margin: 40px auto;
+      margin: 50px auto;
     }
-    @keyframes spin { 0%{transform:rotate(0);}100%{transform:rotate(360deg);} }
+    @keyframes spin { 0%{transform:rotate(0)}100%{transform:rotate(360deg)} }
 
-    /* Modal fix */
-    #playerModal { z-index: 1000; transition: opacity 0.3s ease; }
-    #playerModal video { outline: none; }
-
-    /* Logo animation */
-    .animate-logo {
-      animation: float-pulse 3s ease-in-out infinite, glow-logo 2s ease-in-out infinite alternate;
-    }
-    @keyframes float-pulse {
-      0%,100%{transform:translateY(0);}
-      50%{transform:translateY(-8px);}
-    }
-    @keyframes glow-logo {
-      0%{filter:drop-shadow(0 0 2px #fffa65) drop-shadow(0 0 4px #ffba00);}
-      50%{filter:drop-shadow(0 0 6px #fffa65) drop-shadow(0 0 12px #ffba00);}
-      100%{filter:drop-shadow(0 0 2px #fffa65) drop-shadow(0 0 4px #ffba00);}
+    .movie-card:hover {
+      transform: scale(1.05);
+      transition: all 0.3s ease;
     }
   </style>
 </head>
 
-<body class="bg-black text-gray-100 min-h-screen">
-  <!-- Header -->
-  <div class="relative w-full h-[400px] md:h-[500px] overflow-hidden">
-    <iframe src="https://www.youtube.com/embed/iX2rBomAWa0?autoplay=1&mute=1&loop=1&playlist=iX2rBomAWa0&controls=0&showinfo=0&modestbranding=1"
-      frameborder="0" allow="autoplay; fullscreen"
-      class="absolute top-0 left-0 w-full h-full pointer-events-none"></iframe>
+<body class="min-h-screen flex flex-col">
 
+  <!-- Header / Hero -->
+  <header class="relative h-[400px] md:h-[500px] overflow-hidden">
+    <iframe src="https://www.youtube.com/embed/iX2rBomAWa0?autoplay=1&mute=1&loop=1&playlist=iX2rBomAWa0&controls=0&showinfo=0&modestbranding=1"
+      class="absolute top-0 left-0 w-full h-full pointer-events-none" allow="autoplay; fullscreen"></iframe>
     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGeAAMInTsEBPz2qzdPdVhwaUCpxahYmw9hEbtukl6KaVz1MO2lJUy5J78wCCfQmKTb4g&usqp=CAU"
-      alt="Logo"
-      class="absolute top-4 left-4 h-16 md:h-24 animate-logo z-10" />
-  </div>
+      class="absolute top-4 left-4 h-20 md:h-24 animate-pulse" alt="MIB Logo"/>
+  </header>
 
   <!-- Search -->
   <section class="container mx-auto px-4 py-6">
     <div class="relative mb-6">
       <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-yellow-400"></i>
       <input id="searchBar" type="text"
-        placeholder="Search movies..."
+        placeholder="Search Men in Black movies..."
         class="w-full pl-12 pr-4 py-3 bg-gray-900 border-2 border-yellow-500 rounded-lg focus:ring-2 focus:ring-yellow-500 text-white placeholder-yellow-400"/>
     </div>
-    <span id="movie-count">0</span> movies available
+    <p><span id="movie-count">0</span> movies available</p>
   </section>
 
   <!-- Movies Grid -->
-  <main class="container mx-auto px-4 pb-10">
+  <main class="container mx-auto px-4 pb-10 flex-grow">
     <div id="loading" class="spinner hidden"></div>
-    <div id="movies" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"></div>
+    <div id="movies" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
   </main>
 
   <!-- Modal Player -->
-  <div id="playerModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center">
-    <div class="relative w-full max-w-4xl p-4">
-      <button id="closeModal"
-        class="absolute -top-10 right-0 text-3xl text-yellow-400 hover:text-yellow-300 z-[1100]">
-        <i class="fas fa-times"></i>
-      </button>
-
-      <video id="modalVideo" controls class="w-full aspect-video bg-black rounded-lg">
-        Your browser does not support the video tag.
-      </video>
-
-      <div class="flex justify-between mt-3">
-        <button onclick="playPreviousVideo()" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
-          <i class="fas fa-step-backward mr-1"></i> Prev
-        </button>
-        <button onclick="toggleFullscreen()" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
-          <i class="fas fa-expand mr-1"></i> Fullscreen
-        </button>
-        <button onclick="playNextVideo()" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
-          Next <i class="fas fa-step-forward ml-1"></i>
-        </button>
-      </div>
-
-      <h3 id="modalTitle" class="text-xl font-bold text-yellow-400 mt-3"></h3>
-      <p class="text-center text-gray-400 text-sm mt-1">
-        Space=Play/Pause | ←/→=Seek | F=Fullscreen | N/P=Next/Prev | M=Mute | Esc=Close
-      </p>
-    </div>
+  <div id="playerModal">
+    <i id="closeModal" class="fas fa-times"></i>
+    <video id="modalVideo" controls></video>
   </div>
 
   <!-- Footer -->
   <footer class="bg-gray-900 border-t border-yellow-500 py-6 text-center text-gray-400">
-    <p>© Men In Black</p>
+    <p>© Men In Black Universe</p>
     <div class="flex justify-center space-x-4 mt-3">
       <a href="#" class="hover:text-yellow-400"><i class="fab fa-facebook-f"></i></a>
       <a href="#" class="hover:text-yellow-400"><i class="fab fa-twitter"></i></a>
@@ -132,12 +94,11 @@
   </footer>
 
   <script>
-  window.addEventListener('DOMContentLoaded', () => {
     const movies = [
-      { title: "Men in Black", video: "https://spuc.seawindphotography.space/v4/sc/n1zpb/cf-master.txt?v=1732401887", image: "https://i.ebayimg.com/images/g/hZwAAOSw4DJYlf9S/s-l400.jpg", year: 1997 },
-      { title: "Men in Black II", video: "https://g6m5vwc8rl.halonahospitality.space/m2q5ea5w42hk/hls3/01/00365/50wjgs5uwkhs_h/master.txt", image: "https://image.tmdb.org/t/p/original/enA22EPyzc2WQ1VVyY7zxresQQr.jpg", year: 2002 },
-      { title: "Men in Black 3", video: "https://sh9f.northfieldtrading.shop/v4/9a/ptkkc/cf-master.txt?v=1733201820", image: "https://cdn.kinocheck.com/i/w=1200/8ihiis7t99.jpg", year: 2012 },
-      { title: "Men in Black: International", video: "https://sg1.shegu.net/vip/p1/movie_mp4_h264/2019/1/2/14632/movie.14632.2019.1080p.H264.20190902032427.mp4", image: "https://images.squarespace-cdn.com/content/v1/537007efe4b074eafa50d65c/1566080724075-75X7QCFOWYKMF5H7DJXD/men-in-black-international-spanish-movie-poster-39-1560646358.jpg", year: 2019 },
+      { title: "Men in Black (1997)", video: "https://spuc.seawindphotography.space/v4/sc/n1zpb/cf-master.txt?v=1732401887", image: "https://i.ebayimg.com/images/g/hZwAAOSw4DJYlf9S/s-l400.jpg" },
+      { title: "Men in Black II (2002)", video: "https://g6m5vwc8rl.halonahospitality.space/m2q5ea5w42hk/hls3/01/00365/50wjgs5uwkhs_h/master.txt", image: "https://image.tmdb.org/t/p/original/enA22EPyzc2WQ1VVyY7zxresQQr.jpg" },
+      { title: "Men in Black 3 (2012)", video: "https://sh9f.northfieldtrading.shop/v4/9a/ptkkc/cf-master.txt?v=1733201820", image: "https://cdn.kinocheck.com/i/w=1200/8ihiis7t99.jpg" },
+      { title: "Men in Black: International (2019)", video: "https://sg1.shegu.net/vip/p1/movie_mp4_h264/2019/1/2/14632/movie.14632.2019.1080p.H264.20190902032427.mp4", image: "https://images.squarespace-cdn.com/content/v1/537007efe4b074eafa50d65c/1566080724075-75X7QCFOWYKMF5H7DJXD/men-in-black-international-spanish-movie-poster-39-1560646358.jpg" },
     ];
 
     const container = document.getElementById('movies');
@@ -145,72 +106,64 @@
     const modal = document.getElementById('playerModal');
     const video = document.getElementById('modalVideo');
     const closeModalBtn = document.getElementById('closeModal');
-    const modalTitle = document.getElementById('modalTitle');
     const searchBar = document.getElementById('searchBar');
     const loading = document.getElementById('loading');
-    let currentVideoIndex = null;
+    let currentIndex = null;
 
     function renderMovies(filter = '') {
       loading.classList.remove('hidden');
       container.innerHTML = '';
       const filtered = movies.filter(m => m.title.toLowerCase().includes(filter.toLowerCase()));
-      filtered.forEach((movie, i) => {
-        const div = document.createElement('div');
-        div.className = 'fade-in';
-        div.innerHTML = `
-          <div class="movie-poster bg-gray-800 rounded-lg overflow-hidden shadow-lg flex flex-col">
-            <img src="${movie.image}" alt="${movie.title}" class="w-full h-64 object-cover">
-            <div class="p-3 flex-grow">
-              <h3 class="font-bold text-yellow-400 truncate">${movie.title}</h3>
-              <span class="text-sm text-gray-400">${movie.year}</span>
-            </div>
-            <button class="play-btn bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2">
-              <i class="fas fa-play mr-2"></i>Watch Now
-            </button>
+      filtered.forEach((movie, index) => {
+        const card = document.createElement('div');
+        card.className = 'movie-card bg-gray-800 rounded-lg overflow-hidden shadow-lg cursor-pointer';
+        card.innerHTML = `
+          <img src="${movie.image}" alt="${movie.title}" class="w-full h-64 object-cover">
+          <div class="p-3">
+            <h3 class="text-yellow-400 font-bold text-sm">${movie.title}</h3>
           </div>`;
-        div.querySelector('.play-btn').onclick = () => openModal(i);
-        container.appendChild(div);
+        card.addEventListener('click', () => openModal(index));
+        container.appendChild(card);
       });
       movieCount.textContent = filtered.length;
       loading.classList.add('hidden');
     }
 
     function openModal(index) {
-      currentVideoIndex = index;
-      modal.classList.remove('hidden');
+      currentIndex = index;
+      const movie = movies[index];
+      video.src = movie.video;
+      video.controls = true;
+      video.style.pointerEvents = 'auto';
+      modal.classList.add('active');
       document.body.style.overflow = 'hidden';
-      modalTitle.textContent = movies[index].title;
-      video.src = movies[index].video;
       video.play().catch(()=>{});
     }
 
     function closeModal() {
-      modal.classList.add('hidden');
+      modal.classList.remove('active');
       video.pause();
       video.src = '';
       document.body.style.overflow = 'auto';
     }
 
-    function playNextVideo() {
-      if (currentVideoIndex < movies.length - 1) openModal(currentVideoIndex + 1);
-    }
-    function playPreviousVideo() {
-      if (currentVideoIndex > 0) openModal(currentVideoIndex - 1);
-    }
-    function toggleFullscreen() {
-      if (!document.fullscreenElement) video.requestFullscreen();
-      else document.exitFullscreen();
-    }
-
+    // close button
     closeModalBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-    document.addEventListener('keydown', (e) => {
-      if (!modal.classList.contains('hidden') && e.key === 'Escape') closeModal();
+
+    // click outside closes
+    modal.addEventListener('click', (e) => {
+      if (e.target.id === 'playerModal') closeModal();
     });
-    searchBar.addEventListener('input', e => renderMovies(e.target.value));
+
+    // ESC closes
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+    });
+
+    // search bar
+    searchBar.addEventListener('input', (e) => renderMovies(e.target.value));
 
     renderMovies();
-  });
   </script>
 </body>
 </html>
