@@ -123,41 +123,33 @@
     </div>
 </footer>
 
-<!-- Modal Player -->
-  <div id="playback-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-90">
-    <div class="relative w-full max-w-4xl bg-gray-900 rounded-xl overflow-hidden p-4">
-      <button id="close-modal" class="absolute top-3 right-3 z-50 text-white hover:text-yellow-500 text-2xl transition">
-        <i class="fas fa-times"></i>
-      </button>
-
-      <div class="aspect-video">
-        <video id="modal-video" class="w-full h-full bg-black" controls playsinline></video>
-      </div>
-
-      <div id="qualityControls" class="flex justify-center mt-3"></div>
-      <div id="playerError" class="hidden bg-red-900 text-white p-2 rounded mt-2 text-center"></div>
-
-      <div class="flex justify-between mt-3">
-        <button id="prevBtn" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
-          <i class="fas fa-step-backward mr-1"></i> Prev
+<!-- ---------------------- Modal Player ---------------------- -->
+<div id="playerModal" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
+    <div class="w-full max-w-4xl relative">
+        <button id="closeModal" class="absolute -top-10 right-0 text-2xl text-yellow-400 hover:text-yellow-300">
+            <i class="fas fa-times"></i>
         </button>
-        <div class="flex items-center gap-2">
-          <button id="fullscreenBtn" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
-            <i class="fas fa-expand mr-1"></i> Fullscreen
-          </button>
-          <button id="muteBtn" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
-            <i class="fas fa-volume-up mr-1"></i> Mute
-          </button>
+        <video id="modalVideo" controls class="w-full aspect-video bg-black"></video>
+        <div id="qualityControls" class="flex justify-center mt-2"></div>
+        <div id="playerError" class="hidden bg-red-900 text-white p-2 rounded mt-2 text-center"></div>
+        <div class="flex justify-between mt-2">
+            <button onclick="playPreviousVideo()" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
+                <i class="fas fa-step-backward mr-1"></i> Prev
+            </button>
+            <button onclick="toggleFullscreen()" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
+                <i class="fas fa-expand mr-1"></i> Fullscreen
+            </button>
+            <button onclick="playNextVideo()" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
+                Next <i class="fas fa-step-forward ml-1"></i>
+            </button>
         </div>
-        <button id="nextBtn" class="px-3 py-1 bg-gray-800 text-yellow-400 rounded hover:bg-gray-700">
-          Next <i class="fas fa-step-forward ml-1"></i>
-        </button>
-      </div>
-
-      <h3 id="modal-title" class="text-xl font-bold text-yellow-400 mt-3"></h3>
-      <div class="text-center text-gray-400 text-sm mt-1">Keyboard: Space=Play/Pause, ←/→ seek, F=Fullscreen, N=Next, P=Prev, M=Mute</div>
+        <h3 id="modalTitle" class="text-xl font-bold text-yellow-400 mt-2"></h3>
+        <div class="text-center text-gray-400 text-sm mt-1">
+            Keyboard shortcuts: Space=Play/Pause, Arrows=Seek, F=Fullscreen, N=Next, P=Previous, M=Mute
+        </div>
     </div>
-  </div>
+</div>
+
 <!-- ---------------------- Scripts ---------------------- -->
 <script>
 window.addEventListener('DOMContentLoaded', () => {
@@ -246,5 +238,3 @@ window.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
-
-
