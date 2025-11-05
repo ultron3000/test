@@ -187,13 +187,14 @@
 
 <!-- Full-Width Video Header with Animated Logo -->
 <div class="relative w-full h-[400px] md:h-[500px] overflow-hidden">
-  <!-- YouTube Video Background -->
-  <iframe 
-    src="https://www.youtube.com/embed/SqSuRdkglxM?autoplay=1&mute=1&loop=1&playlist=SqSuRdkglxM&controls=0&showinfo=0&modestbranding=1"
-    frameborder="0" 
-    allow="autoplay; fullscreen" 
-    class="absolute top-0 left-0 w-full h-full pointer-events-none">
-  </iframe>
+  <div class="absolute top-0 left-0 w-full h-full overflow-hidden">
+    <iframe
+      src="https://www.youtube.com/embed/SqSuRdkglxM?autoplay=1&mute=1&loop=1&playlist=SqSuRdkglxM&controls=0&showinfo=0&modestbranding=1"
+      frameborder="0"
+      allow="autoplay; fullscreen"
+      class="absolute top-1/2 left-1/2 w-[177.78vh] h-[100vh] min-w-full min-h-full -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+    ></iframe>
+  </div>
 
   <!-- Animated Logo at Top-Left -->
   <img 
@@ -267,8 +268,8 @@
 <script>
     const movies = [
         { title: "Tron", video: "https://sipt.lunetrix.store/v4/xq/scsaj/index-f1-v1-a1.txt", image: "https://i5.walmartimages.com/seo/Tron-movie-POSTER-Style-G-11-x-17-1982_68f5c307-3d6a-4dc4-8ff4-f3fd44ed0202.873436c42e06a4c265a88f9d06b574b3.jpeg", category: "-", year: 1982 },
-        { title: "Tron: Legacy", video: "https://vip.opstream14.com/20220411/7170_ccff4c60/index.m3u8", image: "https://i.ebayimg.com/images/g/aksAAOSw1IhcOhP1/s-l1200.jpg", category: "-", year: 2010 },
-        { title: "Tron: Ares", video: "https://znomc6azq2dc.mindspireleadership.sbs/uk2y0xwy2xup0/hls3/01/12258/9odqbf5wnw5x_,l,n,.urlset/master.txt", image: "https://www.bizcochito.es/img/tt6604188-en-pos.webp", category: "-", year: 2025 },
+        { title: "Tron: Legacy", video: "https://s1q.aesthorium.sbs:443/v4/ho/p98ap/index-f1-v1-a1.txt", image: "https://i.ebayimg.com/images/g/aksAAOSw1IhcOhP1/s-l1200.jpg", category: "-", year: 2010 },
+        { title: "Tron: Ares", video: "https://wnsa7jyhmnmt12.sunsetlaneinnovation.store/g3qezmygwi76p/hls3/01/12258/9odqbf5wnw5x_,l,n,.urlset/master.txt", image: "https://www.bizcochito.es/img/tt6604188-en-pos.webp", category: "-", year: 2025 },
     ];
 
     // Render movies
@@ -502,3 +503,4 @@ document.addEventListener('click', e => {
   }
 });
 </script>
+
