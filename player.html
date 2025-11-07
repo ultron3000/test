@@ -101,12 +101,9 @@
     object-fit: cover;
   }
 
-  /* allow JS to control controls visibility in fullscreen */
-.video-container:fullscreen .controls-container {
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-
+  .video-container:fullscreen .controls-container {
+    opacity: 1 !important;
+  }
 
   @media (max-width: 768px) {
     .controls-container {
@@ -718,82 +715,24 @@
 
     // ✅ Fullscreen with auto-rotate on mobile
 function toggleFullscreen() {
-  // -----------------------------
-// Fullscreen auto-hide controls
-// Paste this right after toggleFullscreen()
-// -----------------------------
-
-let _fsHideTimeout = null;
-
-function _fsShowControls() {
-  // make visible and reset hide timer
-  controlsContainer.style.opacity = '1';
-  if (_fsHideTimeout) {
-    clearTimeout(_fsHideTimeout);
-  }
-  _fsHideTimeout = setTimeout(() => {
-    if (!video.paused) {
-      controlsContainer.style.opacity = '0';
-    }
-  }, 3000); // 3000ms = 3s (change to 2000 or 5000 if you want)
-}
-
-// Separate handlers so removeEventListener can remove them
-function _fsActivityHandler() {
-  _fsShowControls();
-}
-function _fsTouchHandler() {
-  _fsShowControls();
-}
-
-// Listen for entering/exiting fullscreen
-document.addEventListener('fullscreenchange', () => {
-  if (document.fullscreenElement) {
-    // Entered fullscreen: show controls then auto-hide after inactivity
-    _fsShowControls();
-
-    // Listen to global activity (document is more reliable in fullscreen)
-    document.addEventListener('mousemove', _fsActivityHandler);
-    document.addEventListener('touchstart', _fsTouchHandler, { passive: true });
-    document.addEventListener('keydown', _fsActivityHandler); // show controls on keypress (eg. space)
+  if (!document.fullscreenElement) {
+    videoContainer.requestFullscreen().then(() => {
+      // Try to lock landscape on supported devices
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {});
+      }
+    }).catch(err => {
+      console.error(`Error attempting to enable fullscreen: ${err.message}`);
+    });
   } else {
-    // Exited fullscreen: show controls and cleanup listeners
-    controlsContainer.style.opacity = '1';
-    if (_fsHideTimeout) {
-      clearTimeout(_fsHideTimeout);
-      _fsHideTimeout = null;
+    document.exitFullscreen();
+    // Unlock orientation when exiting fullscreen
+    if (screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock();
     }
-    document.removeEventListener('mousemove', _fsActivityHandler);
-    document.removeEventListener('touchstart', _fsTouchHandler);
-    document.removeEventListener('keydown', _fsActivityHandler);
   }
-});
+}
 
-
-// ✅ Auto-hide controls in fullscreen after few seconds of inactivity
-document.addEventListener("fullscreenchange", () => {
-  if (document.fullscreenElement) {
-    let hideTimeout;
-
-    const hideControls = () => {
-      if (!video.paused) controlsContainer.style.opacity = "0";
-    };
-
-    const showControls = () => {
-      controlsContainer.style.opacity = "1";
-      clearTimeout(hideTimeout);
-      hideTimeout = setTimeout(hideControls, 3000);
-    };
-
-    // Start listening when entering fullscreen
-    videoContainer.addEventListener("mousemove", showControls);
-    showControls(); // Show at start, then auto-hide
-  } else {
-    // When exiting fullscreen, always show controls
-    controlsContainer.style.opacity = "1";
-    videoContainer.removeEventListener("mousemove", showControls);
-  }
-});
 
 
     // Toggle settings menu
