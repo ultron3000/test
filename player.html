@@ -733,6 +733,30 @@ function toggleFullscreen() {
   }
 }
 
+// ✅ Auto-hide controls in fullscreen after few seconds of inactivity
+document.addEventListener("fullscreenchange", () => {
+  if (document.fullscreenElement) {
+    let hideTimeout;
+
+    const hideControls = () => {
+      if (!video.paused) controlsContainer.style.opacity = "0";
+    };
+
+    const showControls = () => {
+      controlsContainer.style.opacity = "1";
+      clearTimeout(hideTimeout);
+      hideTimeout = setTimeout(hideControls, 3000);
+    };
+
+    // Start listening when entering fullscreen
+    videoContainer.addEventListener("mousemove", showControls);
+    showControls(); // Show at start, then auto-hide
+  } else {
+    // When exiting fullscreen, always show controls
+    controlsContainer.style.opacity = "1";
+    videoContainer.removeEventListener("mousemove", showControls);
+  }
+});
 
 
     // Toggle settings menu
