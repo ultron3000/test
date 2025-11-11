@@ -195,12 +195,36 @@
     </div>
   </div>
 
-  <!-- Animated Logo at Top-Left -->
+    <!-- Animated Logo at Top-Left -->
   <img 
     src="https://ez-lettering.com/wp-content/uploads/2021/07/product-2-18.png" 
     alt="Kung Fu Panda Logo" 
     class="absolute top-4 left-4 h-16 md:h-24 animate-logo z-10"
   />
+</div>
+
+<style>
+  /* Animated Logo */
+  .animate-logo {
+    animation: float-pulse 3s ease-in-out infinite, glow-logo 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes float-pulse {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes glow-logo {
+    0% { filter: drop-shadow(0 0 2px #fffa65) drop-shadow(0 0 4px #ffba00); }
+    50% { filter: drop-shadow(0 0 6px #fffa65) drop-shadow(0 0 12px #ffba00); }
+    100% { filter: drop-shadow(0 0 2px #fffa65) drop-shadow(0 0 4px #ffba00); }
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .animate-logo { height: 4rem; top: 1rem; left: 1rem; }
+  }
+</style>
 
   <!-- Movies Grid -->
   <div class="mb-12 mt-8">
