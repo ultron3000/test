@@ -6,6 +6,9 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<!-- HLS.js for adaptive HLS playback -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.1/dist/hls.min.js"></script>
+
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
     
@@ -115,88 +118,82 @@
     .delay-300 { animation-delay: 0.3s; }
     .delay-400 { animation-delay: 0.4s; }
     
-    /* Modal styles */
+    /* Modal styles (Panther-style richer overlay) */
     .modal-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.9);
+      inset: 0;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.85);
       z-index: 1000;
     }
-    
-    .modal-container {
-      width: 90%;
-      max-width: 1000px;
-      background: #1e293b;
+    .modal-card {
+      width: 95%;
+      max-width: 1100px;
+      background: linear-gradient(180deg, rgba(17,24,39,0.9), rgba(17,24,39,0.95));
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+      border: 1px solid rgba(255,204,0,0.06);
     }
-    
     .modal-header {
-      padding: 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #0f172a;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      background: linear-gradient(90deg, rgba(0,0,0,0.2), transparent);
     }
-    
-    .modal-content {
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight:600;
+      color: #ffea8a;
+    }
+    .modal-close-btn {
+      width:40px;height:40px;border-radius:999px;background:transparent;border:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;
+    }
+    .modal-player {
       position: relative;
-      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      padding-bottom: 56.25%;
       height: 0;
-      overflow: hidden;
+      background: black;
     }
-    
-    .modal-video {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
+    .modal-player video,
+    .modal-player iframe {
+      position:absolute;
+      top:0;left:0;width:100%;height:100%;
+      background:black;
     }
-    
-    .modal-close {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-    
-    .modal-close:hover {
-      color: var(--primary);
+
+    /* small screens modal tweaks */
+    @media (max-width:640px) {
+      .modal-card { max-width: 96%; }
+      .modal-title { font-size: 1rem; }
     }
   </style>
 </head>
 <body class="relative">
 <!-- Floating stars background -->
 <div class="fixed inset-0 overflow-hidden -z-10">
-<div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/80"></div>
-<div class="stars"></div>
-<div class="stars2"></div>
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/80"></div>
+  <div class="stars"></div>
+  <div class="stars2"></div>
 </div>
+
 <div class="container mx-auto px-4 py-8 max-w-7xl">
 
-<!-- Full-Width Video Header with Animated Logo -->
-<div class="relative w-full h-[400px] md:h-[500px] overflow-hidden">
-  <div class="absolute top-0 left-0 w-full h-full overflow-hidden">
-    <iframe
-      src="https://www.youtube.com/embed/9WZllcEgWrM?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=9WZllcEgWrM"
-      frameborder="0"
-      allow="autoplay; fullscreen"
-      class="absolute top-1/2 left-1/2 w-[177.78vh] h-[100vh] min-w-full min-h-full -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-    ></iframe>
+  <!-- Full-Width Video Header with Animated Logo -->
+  <div class="relative w-full h-[400px] md:h-[500px] overflow-hidden">
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden">
+      <iframe
+        src="https://www.youtube.com/embed/9WZllcEgWrM?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=9WZllcEgWrM"
+        frameborder="0"
+        allow="autoplay; fullscreen"
+        class="absolute top-1/2 left-1/2 w-[177.78vh] h-[100vh] min-w-full min-h-full -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+      ></iframe>
+    </div>
   </div>
-</div>
-
 
   <!-- Animated Logo at Top-Left -->
   <img 
@@ -204,235 +201,251 @@
     alt="Kung Fu Panda Logo" 
     class="absolute top-4 left-4 h-16 md:h-24 animate-logo z-10"
   />
-</div>
 
-<style>
-  /* Animated Logo */
-  .animate-logo {
-    animation: float-pulse 3s ease-in-out infinite, glow-logo 2s ease-in-out infinite alternate;
-  }
+  <!-- Movies Grid -->
+  <div class="mb-12 mt-8">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6" id="movies"></div>
+  </div>
 
-  @keyframes float-pulse {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-  }
-
-  @keyframes glow-logo {
-    0% { filter: drop-shadow(0 0 2px #fffa65) drop-shadow(0 0 4px #ffba00); }
-    50% { filter: drop-shadow(0 0 6px #fffa65) drop-shadow(0 0 12px #ffba00); }
-    100% { filter: drop-shadow(0 0 2px #fffa65) drop-shadow(0 0 4px #ffba00); }
-  }
-
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .animate-logo { height: 4rem; top: 1rem; left: 1rem; }
-  }
-</style>
-
-
-
-
-
-
-
-
-</div>
-</div>
-<!-- Movies Grid -->
-<div class="mb-12">
-<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6" id="movies"></div>
-</div>
-<!-- Footer -->
-<footer class="py-6 border-t border-gray-800 text-center text-gray-400">
-<p>©  Frankenstein Universe</p>
-<div class="flex justify-center space-x-4 mt-2">
-<a class="hover:text-yellow-400 transition" href="#"><i class="fab fa-facebook"></i></a>
-<a class="hover:text-yellow-400 transition" href="#"><i class="fab fa-twitter"></i></a>
-<a class="hover:text-yellow-400 transition" href="https://www.instagram.com/stark_4152/"><i class="fab fa-instagram"></i></a>
-<a class="hover:text-yellow-400 transition" href="https://www.youtube.com/channel/UCYwTAs1PRVHbq4LnCHEEicw"><i class="fab fa-youtube"></i></a>
-</div>
-</footer>
-</div>
-
-<!-- Modal Player -->
-<div id="video-modal" class="modal-overlay hidden">
-  <div class="modal-container">
-    <div class="modal-header">
-      <h3 id="modal-title" class="text-xl font-bold"></h3>
-      <button class="modal-close" id="modal-close-btn">&times;</button>
+  <!-- Footer -->
+  <footer class="py-6 border-t border-gray-800 text-center text-gray-400">
+    <p>©  Frankenstein Universe</p>
+    <div class="flex justify-center space-x-4 mt-2">
+      <a class="hover:text-yellow-400 transition" href="#"><i class="fab fa-facebook"></i></a>
+      <a class="hover:text-yellow-400 transition" href="#"><i class="fab fa-twitter"></i></a>
+      <a class="hover:text-yellow-400 transition" href="#"><i class="fab fa-instagram"></i></a>
+      <a class="hover:text-yellow-400 transition" href="#"><i class="fab fa-youtube"></i></a>
     </div>
-    <div class="modal-content">
-      <video id="modal-video" class="modal-video" controls></video>
+  </footer>
+</div>
+
+<!-- Modal Player (Panther-style) -->
+<div id="video-modal" class="modal-overlay hidden">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-header">
+      <div id="modal-title" class="modal-title"></div>
+      <button id="close-video-modal" class="modal-close-btn" aria-label="Close player">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-player">
+      <!-- video element: we will attach HLS or set src directly -->
+      <video id="modal-video" class="w-full h-full" controls playsinline></video>
     </div>
   </div>
 </div>
 
 <script>
-    const movies = [
-      { title: "I, Frankenstein (2014)", video: "https://s9dz.obsidianfitnesslab.sbs:443/v4/us/vi3qg/index-f2-v1-a1.txt", image: "https://cdn.kinocheck.com/i/w=1200/92csvhf12y.jpg", category: "other", year: 2024 },
-      { title: "Victor Frankenstein (2015)", video: "https://sojg.driftmindfinancials.cyou:443/v4/sc/cxy18/index-f2-v1-a1.txt", image: "https://artfiles.alphacoders.com/998/99832.jpg", category: "other", year: 2025 },
-      { title: "Frankenstein  (2025)", video: "https://cdn4504.weima388siv.com:443/stream2/i-cdn-0/124de233b0783ac68aa5e25dcbcc16b0/MJTMsp1RshGTygnMNRUR2N2MSlnWXZEdMNDZzQWe5MDZzMmdZJTO1R2RWVHZDljekhkSsl1VwYnWtx2cihVT21EVahWTqlEeZpWVzo1RKlWTEF0dNpnUplleZBTT6FVeN1mSs1keNlnWE1UP:1762860429:160.119.251.137:3071dd16b6e9799f0916122433ad273ea32fd87f1d74591b1a04b523d03d0f98/./1080/index.m3u8", image: "https://s3.amazonaws.com/nightjarprod/content/uploads/sites/243/2025/10/15084433/5fqmZYw3o22VoJpXx9bjQuc7ZPV.jpg", category: "other", year: 2024 },
-      { title: "Frankenstein: Hindi Dubbed  (2025)", video: "https://streamtape.to/get_video?id=6oaJDl9aYWHeAa&expires=1762929005&ip=F0uOKRWNFS9XKxR&token=DrjHMgbpgcRq&stream=1", image: "https://s3.amazonaws.com/nightjarprod/content/uploads/sites/243/2025/10/15084433/5fqmZYw3o22VoJpXx9bjQuc7ZPV.jpg", category: "other", year: 2024 },
-      
-               ];
+/* ===== MOVIES LIST (unchanged structure) ===== */
+const movies = [
+  { title: "I, Frankenstein (2014)", video: "https://s9dz.obsidianfitnesslab.sbs:443/v4/us/vi3qg/index-f2-v1-a1.txt", image: "https://cdn.kinocheck.com/i/w=1200/92csvhf12y.jpg", category: "other", year: 2024 },
+  { title: "Victor Frankenstein (2015)", video: "https://sojg.driftmindfinancials.cyou:443/v4/sc/cxy18/index-f2-v1-a1.txt", image: "https://artfiles.alphacoders.com/998/99832.jpg", category: "other", year: 2025 },
+  { title: "Frankenstein  (2025)", video: "https://cdn4504.weima388siv.com:443/stream2/i-cdn-0/124de233b0783ac68aa5e25dcbcc16b0/MJTMsp1RshGTygnMNRUR2N2MSlnWXZEdMNDZzQWe5MDZzMmdZJTO1R2RWVHZDljekhkSsl1VwYnWtx2cihVT21EVahWTqlEeZpWVzo1RKlWTEF0dNpnUplleZBTT6FVeN1mSs1keNlnWE1UP:1762860429:160.119.251.137:3071dd16b6e9799f0916122433ad273ea32fd87f1d74591b1a04b523d03d0f98/./1080/index.m3u8", image: "https://s3.amazonaws.com/nightjarprod/content/uploads/sites/243/2025/10/15084433/5fqmZYw3o22VoJpXx9bjQuc7ZPV.jpg", category: "other", year: 2024 },
+  { title: "Frankenstein: Hindi Dubbed  (2025)", video: "https://streamtape.to/get_video?id=6oaJDl9aYWHeAa&expires=1762929005&ip=F0uOKRWNFS9XKxR&token=DrjHMgbpgcRq&stream=1", image: "https://s3.amazonaws.com/nightjarprod/content/uploads/sites/243/2025/10/15084433/5fqmZYw3o22VoJpXx9bjQuc7ZPV.jpg", category: "other", year: 2024 },
+];
 
-    // Render movies
-    const container = document.getElementById('movies');
-    const videoModal = document.getElementById('video-modal');
-    const modalVideo = document.getElementById('modal-video');
-    const modalTitle = document.getElementById('modal-title');
-    const modalCloseBtn = document.getElementById('modal-close-btn');
-    
-    function renderMovies(moviesToRender) {
-      container.innerHTML = '';
-      moviesToRender.forEach((movie, index) => {
-        const delayClass = `delay-${(index % 5) * 100}`;
-        
-        const div = document.createElement('div');
-        div.className = `movie-card animate-fade-in ${delayClass} rounded-xl overflow-hidden bg-gray-800 hover:bg-gray-700 cursor-pointer relative group`;
-        div.innerHTML = `
-          <div class="relative overflow-hidden rounded-t-lg">
-            <img src="${movie.image}" alt="${movie.title}" class="w-full h-full object-cover movie-poster">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-              <button class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-full transition transform hover:scale-105">
-                <i class="fas fa-play mr-2"></i> Watch Now
-              </button>
-            </div>
-          </div>
-          <div class="p-4">
-            <h3 class="font-semibold text-lg truncate">${movie.title}</h3>
-            <div class="flex justify-between items-center mt-2 text-sm text-gray-400">
-              
-         
-            </div>
-          </div>
-        `;
-        
-        div.onclick = () => {
-          if (isMP4(movie.video)) {
-            // Play MP4 in modal
-            openModal(movie);
-          } else {
-            // Redirect to player.html for other formats
-            const url = `player.html?title=${encodeURIComponent(movie.title)}&video=${encodeURIComponent(movie.video)}&index=${index}`;
-            window.location.href = url;
-          }
-        };
-        
-        container.appendChild(div);
+/* ===== Player Helpers (Panther-style logic integrated) ===== */
+const container = document.getElementById('movies');
+const videoModal = document.getElementById('video-modal');
+const modalVideo = document.getElementById('modal-video');
+const modalTitle = document.getElementById('modal-title');
+const closeBtn = document.getElementById('close-video-modal');
+
+let currentHls = null;
+
+function isHls(url){
+  if(!url) return false;
+  // check typical HLS patterns (.m3u8 or index/*.txt-like manifest used in your streams)
+  return url.includes('.m3u8') || url.toLowerCase().includes('index-') || /index.*\.txt/i.test(url) || url.includes('/index/');
+}
+function isYouTube(url){
+  if(!url) return false;
+  return url.includes('youtube.com/watch') || url.includes('youtu.be') || url.includes('youtube.com/embed');
+}
+function isMP4(url){
+  if(!url) return false;
+  return /\.mp4($|\?)/i.test(url) || url.toLowerCase().includes('.mp4');
+}
+
+/* Show / hide modal */
+function showModal(){ videoModal.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function hideModal(){ videoModal.classList.add('hidden'); document.body.style.overflow=''; }
+
+/* Main: play any video (HLS/MP4/YouTube) inline if possible */
+function playInModal(title, url){
+  // Clean previous HLS
+  if(currentHls){ try{ currentHls.destroy(); }catch(e){} currentHls = null; }
+
+  // Reset video element
+  try{ modalVideo.pause(); }catch(e){}
+  modalVideo.removeAttribute('src');
+  modalVideo.load();
+  modalTitle.textContent = title || '';
+
+  if(!url || url.trim()===''){
+    modalTitle.textContent = (title||'') + ' — No playable URL provided';
+    showModal();
+    return;
+  }
+
+  // YouTube: open in new tab or use embed iframe. We'll open embed in new tab for now.
+  if(isYouTube(url)){
+    // If an embed URL is present, open inline iframe fallback (simpler: open new tab to avoid cross-origin)
+    // User can change this to an iframe insertion if they want inline YouTube playback.
+    window.open(url, '_blank');
+    return;
+  }
+
+  // HLS streams
+  if(isHls(url)){
+    if(Hls.isSupported()){
+      currentHls = new Hls();
+      currentHls.loadSource(url);
+      currentHls.attachMedia(modalVideo);
+      currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
+        showModal();
+        modalVideo.play().catch(()=>{ /* autoplay may be blocked; user can press play */ });
       });
-    }
-
-    // Check if URL is MP4
-    function isMP4(url) {
-      return /\.mp4($|\?)/i.test(url);
-    }
-
-    // Open modal with video
-    function openModal(movie) {
-      modalTitle.textContent = movie.title;
-      modalVideo.src = movie.video;
-      videoModal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    }
-
-    // Close modal
-    function closeModal() {
-      videoModal.classList.add('hidden');
-      modalVideo.pause();
-      modalVideo.src = '';
-      document.body.style.overflow = '';
-    }
-
-    // Close modal when clicking close button or outside
-    modalCloseBtn.addEventListener('click', closeModal);
-    videoModal.addEventListener('click', (e) => {
-      if (e.target === videoModal) {
-        closeModal();
-      }
-    });
-
-    // Initial render
-    renderMovies(movies);
-
-    // Search functionality
-    document.getElementById('searchBar').addEventListener('input', function() {
-      const searchTerm = this.value.toLowerCase();
-      const filteredMovies = movies.filter(movie => 
-        movie.title.toLowerCase().includes(searchTerm)
-      );
-      renderMovies(filteredMovies);
-    });
-
-    // Category filtering
-    document.querySelectorAll('.category-tab').forEach(tab => {
-      tab.addEventListener('click', function() {
-        // Update active tab
-        document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-        
-        const category = this.dataset.category;
-        let filteredMovies;
-        
-        if (category === 'all') {
-          filteredMovies = movies;
-        } else {
-          filteredMovies = movies.filter(movie => 
-            movie.categories.includes(category)
-          );
+      currentHls.on(Hls.Events.ERROR, (event, data) => {
+        console.warn('Hls error', data);
+        // On fatal error, fallback to setting src directly
+        if(data && data.fatal){
+          try{
+            currentHls.destroy();
+          }catch(e){}
+          currentHls = null;
+          modalVideo.src = url;
+          showModal();
         }
-        
-        renderMovies(filteredMovies);
       });
-    });
-
-    // Create floating stars background
-    function createStars(container, count, sizeRange, durationRange) {
-      for (let i = 0; i < count; i++) {
-        const star = document.createElement('div');
-        star.className = 'absolute rounded-full bg-white';
-        
-        // Random position
-        const left = Math.random() * 100;
-        const top = Math.random() * 100;
-        
-        // Random size
-        const size = sizeRange[0] + Math.random() * (sizeRange[1] - sizeRange[0]);
-        
-        // Random animation duration
-        const duration = durationRange[0] + Math.random() * (durationRange[1] - durationRange[0]);
-        
-        star.style.left = `${left}%`;
-        star.style.top = `${top}%`;
-        star.style.width = `${size}px`;
-        star.style.height = `${size}px`;
-        star.style.opacity = Math.random() * 0.5 + 0.1;
-        star.style.animation = `float ${duration}s infinite ease-in-out alternate`;
-        star.style.animationDelay = `${Math.random() * 5}s`;
-        
-        container.appendChild(star);
-      }
+    } else {
+      // Browser supports native HLS (Safari) — set src directly
+      modalVideo.src = url;
+      showModal();
+      modalVideo.play().catch(()=>{});
     }
+    return;
+  }
 
-    // Add stars to background
-    const starsContainer = document.querySelector('.stars');
-    const starsContainer2 = document.querySelector('.stars2');
-    createStars(starsContainer, 50, [1, 3], [5, 15]);
-    createStars(starsContainer2, 30, [2, 4], [10, 20]);
+  // MP4 or direct file
+  if(isMP4(url) || url.startsWith('blob:') || url.includes('stream')){
+    modalVideo.src = url;
+    showModal();
+    modalVideo.play().catch(()=>{ /* autoplay possibly blocked */});
+    return;
+  }
 
-    // Add floating animation
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @keyframes float {
-        0% { transform: translateY(0) translateX(0); }
-        50% { transform: translateY(-20px) translateX(10px); }
-        100% { transform: translateY(0) translateX(0); }
-      }
+  // Fallback: try setting as src
+  modalVideo.src = url;
+  showModal();
+  modalVideo.play().catch(()=>{});
+}
+
+/* Close / cleanup */
+function closePlayer(){
+  if(currentHls){
+    try{ currentHls.destroy(); }catch(e){}
+    currentHls = null;
+  }
+  try{ modalVideo.pause(); }catch(e){}
+  modalVideo.removeAttribute('src');
+  modalVideo.load();
+  hideModal();
+}
+
+/* Close events */
+closeBtn.addEventListener('click', closePlayer);
+videoModal.addEventListener('click', (e) => {
+  // close if click outside modal card area
+  if(e.target === videoModal) closePlayer();
+});
+
+/* Build movie cards and wire up play */
+function renderMovies(moviesToRender){
+  container.innerHTML = '';
+  moviesToRender.forEach((movie, index) => {
+    const delayClass = `delay-${(index % 5) * 100}`;
+    const div = document.createElement('div');
+    div.className = `movie-card animate-fade-in ${delayClass} rounded-xl overflow-hidden bg-gray-800 hover:bg-gray-700 cursor-pointer relative group`;
+    div.innerHTML = `
+      <div class="relative overflow-hidden rounded-t-lg">
+        <img src="${movie.image}" alt="${movie.title}" class="w-full h-full object-cover movie-poster">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+          <button class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-full transition transform hover:scale-105">
+            <i class="fas fa-play mr-2"></i> Watch Now
+          </button>
+        </div>
+      </div>
+      <div class="p-4">
+        <h3 class="font-semibold text-lg truncate">${movie.title}</h3>
+        <div class="flex justify-between items-center mt-2 text-sm text-gray-400">
+          <span>${movie.year || ''}</span>
+        </div>
+      </div>
     `;
-    document.head.appendChild(style);
+    div.addEventListener('click', () => {
+      // Use integrated player for HLS and MP4. For YouTube, open new tab.
+      if(isYouTube(movie.video)){
+        // Optionally replace this with inline iframe insertion
+        window.open(movie.video, '_blank');
+      } else {
+        playInModal(movie.title, movie.video);
+      }
+    });
+    container.appendChild(div);
+  });
+}
+
+/* Render initial */
+renderMovies(movies);
+
+/* Safety: guard for missing elements referenced elsewhere (original script had searchBar references) */
+(function safeGuards(){
+  const searchBar = document.getElementById('searchBar');
+  if(searchBar){
+    searchBar.addEventListener('input', function(){
+      const searchTerm = this.value.toLowerCase();
+      const filtered = movies.filter(m => m.title.toLowerCase().includes(searchTerm));
+      renderMovies(filtered);
+    });
+  }
+})();
+
+/* Floating stars background (unchanged) */
+function createStars(container, count, sizeRange, durationRange) {
+  if(!container) return;
+  for (let i = 0; i < count; i++) {
+    const star = document.createElement('div');
+    star.className = 'absolute rounded-full bg-white';
+    const left = Math.random() * 100;
+    const top = Math.random() * 100;
+    const size = sizeRange[0] + Math.random() * (sizeRange[1] - sizeRange[0]);
+    const duration = durationRange[0] + Math.random() * (durationRange[1] - durationRange[0]);
+    star.style.left = `${left}%`;
+    star.style.top = `${top}%`;
+    star.style.width = `${size}px`;
+    star.style.height = `${size}px`;
+    star.style.opacity = Math.random() * 0.5 + 0.1;
+    star.style.animation = `float ${duration}s infinite ease-in-out alternate`;
+    star.style.animationDelay = `${Math.random() * 5}s`;
+    container.appendChild(star);
+  }
+}
+const starsContainer = document.querySelector('.stars');
+const starsContainer2 = document.querySelector('.stars2');
+createStars(starsContainer, 50, [1, 3], [5, 15]);
+createStars(starsContainer2, 30, [2, 4], [10, 20]);
+
+const style = document.createElement('style');
+style.innerHTML = `
+  @keyframes float {
+    0% { transform: translateY(0) translateX(0); }
+    50% { transform: translateY(-20px) translateX(10px); }
+    100% { transform: translateY(0) translateX(0); }
+  }
+`;
+document.head.appendChild(style);
 </script>
-</body>
-</html>
 
 <!-- Canvas for click sparks -->
 <canvas id="sparkCanvasPage"></canvas>
@@ -450,7 +463,7 @@
 </style>
 
 <script>
-// Click sparks for full page
+// Click sparks for full page (unchanged)
 const canvas = document.getElementById('sparkCanvasPage');
 const ctx = canvas.getContext('2d');
 const sparks = [];
@@ -507,3 +520,5 @@ document.addEventListener('click', e => {
   }
 });
 </script>
+</body>
+</html>
