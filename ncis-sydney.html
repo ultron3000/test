@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NCIS: Sydney</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #111;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #0077cc;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #0099ff;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+    .delay-5 { animation-delay: 0.5s; }
+
+    .glow-effect { position: relative; }
+    .glow-effect::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 119, 204, 0);
+      transition: box-shadow 0.3s ease;
+      pointer-events: none;
+    }
+    .glow-effect:hover::after { box-shadow: 0 0 15px rgba(0, 119, 204, 0.7); }
+
+    .gradient-text {
+      background: linear-gradient(90deg, #00bfff, #0077cc);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .showcase-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+    .showcase-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%);
+      z-index: 1;
+    }
+    .showcase-content { position: relative; z-index: 2; }
+
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+    }
+    .video-container iframe,
+    .video-container video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    body { background: #0b0c0e; color: #eaeaea; }
+    header, footer { background: #121517; }
+    .season-btn.active { background: #0077cc !important; color: #fff !important; }
+    .filter-btn.active { background: #0077cc !important; color: #fff !important; }
+  </style>
+</head>
+<body class="bg-black text-gray-100 min-h-screen">
+
+<header class="sticky top-0 z-50 bg-black bg-opacity-90 backdrop-blur-sm border-b border-blue-600/20">
+  <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-2">
+      <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+        <i class="fas fa-anchor text-white text-xl"></i>
+      </div>
+      <h1 class="text-2xl font-bold gradient-text">NCIS: Sydney</h1>
+    </div>
+    <div class="flex items-center space-x-4">
+      <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-800 transition">
+        <i class="fas fa-moon text-blue-300"></i>
+      </button>
+      <button id="search-btn" class="p-2 rounded-full hover:bg-gray-800 transition">
+        <i class="fas fa-search text-blue-300"></i>
+      </button>
+    </div>
+  </div>
+
+  <div id="search-bar" class="hidden px-4 pb-4">
+    <div class="relative">
+      <input type="text" placeholder="Search episodes..." 
+             class="w-full bg-gray-900 border border-blue-600/30 rounded-full py-2 px-4 pl-10 text-white">
+      <i class="fas fa-search absolute left-3 top-3 text-blue-300"></i>
+    </div>
+  </div>
+</header>
+
+<main class="container mx-auto px-4 py-8">
+  <section class="mb-12 relative overflow-hidden rounded-xl h-64 md:h-96">
+    <video autoplay muted loop class="showcase-video">
+      <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" type="video/mp4">
+    </video>
+    <div class="showcase-overlay"></div>
+    <div class="showcase-content h-full flex flex-col justify-end p-6 md:p-8">
+      <p class="text-gray-300 mb-4 max-w-lg">
+        All episodes from Seasons 1, 2 & 3 of NCIS: Sydney — naval crimes, Indo-Pacific tension, U.S.–Australia task-force action. Select season heading or filter tag to start.
+      </p>
+    </div>
+  </section>
+
+  <div class="flex overflow-x-auto mb-6 pb-2">
+    <div class="flex space-x-2">
+      <button class="season-btn active bg-blue-600 text-white px-4 py-2 rounded-full" data-season="all">All Episodes</button>
+      <button class="season-btn bg-gray-800 px-4 py-2 rounded-full" data-season="1">Season 1</button>
+      <button class="season-btn bg-gray-800 px-4 py-2 rounded-full" data-season="2">Season 2</button>
+      <button class="season-btn bg-gray-800 px-4 py-2 rounded-full" data-season="3">Season 3</button>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap justify-between mb-8 gap-4">
+    <div class="flex space-x-2 overflow-x-auto pb-2">
+      <button class="filter-btn active bg-blue-500 text-white px-4 py-1 rounded-full">All</button>
+      <button class="filter-btn bg-gray-800 px-4 py-1 rounded-full">Crime</button>
+      <button class="filter-btn bg-gray-800 px-4 py-1 rounded-full">Naval</button>
+      <button class="filter-btn bg-gray-800 px-4 py-1 rounded-full">Spy</button>
+      <button class="filter-btn bg-gray-800 px-4 py-1 rounded-full">Drama</button>
+    </div>
+  </div>
+
+  <section>
+    <h3 class="text-xl font-semibold mb-6"><i class="fas fa-list-ul text-blue-400 mr-2"></i>Episodes</h3>
+    <div id="movies" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"></div>
+  </section>
+</main>
+
+<footer class="bg-gray-900 border-t border-gray-800 mt-12 py-8 text-center text-gray-400">
+  © NCIS: Sydney – Fan Listing
+</footer>
+
+<!-- Playback Modal -->
+<div id="playback-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-90">
+  <div class="relative w-full max-w-4xl bg-gray-900 rounded-xl overflow-hidden">
+    <button id="close-modal" class="absolute top-4 right-4 text-white text-2xl">&times;</button>
+    <div class="video-container">
+      <video id="modal-video" class="w-full" controls></video>
+    </div>
+    <div class="p-6">
+      <h3 id="modal-title" class="text-2xl font-bold mb-2"></h3>
+      <div id="season-episode" class="text-gray-400 text-sm mb-2"></div>
+      <div id="episode-duration" class="text-gray-400 text-sm mb-4"></div>
+      <p id="modal-description" class="text-gray-300"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const sampleMP4 = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+
+const movies = [
+  // Season 1 (8 episodes)
+  { title: "Gone Fission", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S1+E1+Gone+Fission", description: "The death of an American seaman on a U.S. nuclear submarine during an AUKUS ceremony on Sydney Harbour is investigated in a joint effort. :contentReference[oaicite:1]{index=1}", duration: "45 min", season:1, episode:1, tags:["Crime","Naval"] },
+  { title: "Snakes In The Grass", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S1+E2+Snakes+In+The+Grass", description: "When a Navy compliance officer is found dead in a waterhole from a snakebite, the team uncovers a deadly taipan in unexpected territory. :contentReference[oaicite:2]{index=2}", duration:"46 min", season:1, episode:2, tags:["Crime","Drama"] },
+  { title: "Brothers In Arms", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S1+E3+Brothers+In+Arms", description: "When a shark spits out an arm wearing U.S. Navy equipment, the investigation tests loyalty among former Navy divers. :contentReference[oaicite:3]{index=3}", duration:"47 min", season:1, episode:3, tags:["Naval","Crime"] },
+  { title: "Ghosted", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S1+E4+Ghosted", description: "A body in Sydney’s historic Rocks area leads the team on a ghost-hunt style chase to catch a killer. :contentReference[oaicite:4]{index=4}", duration:"48 min", season:1, episode:4, tags:["Drama","Crime"] },
+  { title: "Doggiecino Day Afternoon", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S1+E5+Doggiecino+Day+Afternoon", description: "One of their own is held hostage in a dog-cafe situation while the team races to save them. :contentReference[oaicite:5]{index=5}", duration:"46 min", season:1, episode:5, tags:["Drama"] },
+  { title: "Extraction", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S1+E6+Extraction", description: "With rising Indo-Pacific tensions, the task-force gets grafted into a multinational unit and a U.S. Navy researcher is found dead in a secret bunker. :contentReference[oaicite:6]{index=6}", duration:"50 min", season:1, episode:6, tags:["Naval","Crime"] },
+  { title: "Bunker Down", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S1+E7+Bunker+Down", description: "A visit to a high-tech launch site ends up with the team trapped underground with limited oxygen after a research death. :contentReference[oaicite:7]{index=7}", duration:"49 min", season:1, episode:7, tags:["Drama","Naval"] },
+  { title: "Blonde Ambition", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S1+E8+Blonde+Ambition", description: "JD’s son is kidnapped by an international assassin in exchange for a criminal in NCIS custody — global spotlight and internal betrayal. :contentReference[oaicite:8]{index=8}", duration:"52 min", season:1, episode:8, tags:["Crime","Drama"] },
+
+  // Season 2 (10 episodes)
+  { title: "Heart Starter", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S2+E1+Heart+Starter", description: "On DeShawn Jackson’s chaotic first day as boss, a rogue assassin on the run triggers major upheaval. :contentReference[oaicite:9]{index=9}", duration:"44 min", season:2, episode:1, tags:["Crime","Drama"] },
+  { title: "Fire in the Hole", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S2+E2+Fire+in+the+Hole", description: "The team investigates a body found in a harbour and a pirate-themed wedding aboard an 18th-century ship. :contentReference[oaicite:10]{index=10}", duration:"42 min", season:2, episode:2, tags:["Naval","Crime"] },
+  { title: "Back in the USSR", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S2+E3+Back+in+the+USSR", description: "A long-missing U.S. Naval engineer is discovered buried in concrete, leading to deeper conspiracies. :contentReference[oaicite:11]{index=11}", duration:"42 min", season:2, episode:3, tags:["Crime","Spy"] },
+  { title: "Truth Sabre", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S2+E4+Truth+Sabre", description: "The team is drawn into the murky world of online conspiracies. :contentReference[oaicite:12]{index=12}", duration:"42 min", season:2, episode:4, tags:["Spy","Drama"] },
+  { title: "Shucked", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S2+E5+Shucked", description: "When a petty officer is found murdered and frozen, the investigation leads into seafood and sex-trafficking underworld. :contentReference[oaicite:13]{index=13}", duration:"41 min", season:2, episode:5, tags:["Crime"] },
+  { title: "Hell Weak", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S2+E6+Hell+Weak", description: "The suspected suicide of a former U.S. Navy SEAL triggers a deep dive into his past. :contentReference[oaicite:14]{index=14}", duration:"41 min", season:2, episode:6, tags:["Drama","Naval"] },
+  { title: "Breathless", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S2+E7+Breathless", description: "A multinational task-force is assembled in response to rising Indo-Pacific tension and naval crime. :contentReference[oaicite:15]{index=15}", duration:"44 min", season:2, episode:7, tags:["Crime","Naval"] },
+  { title: "Blood Is Thicker Than Vodka", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S2+E8+Blood+Is+Thicker+Than+Vodka", description: "The discovery of an exsanguinated sailor brings the team into the world of modern-day vampires. :contentReference[oaicite:16]{index=16}", duration:"41 min", season:2, episode:8, tags:["Crime","Spy"] },
+  { title: "Mango Madness", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S2+E9+Mango+Madness", description: "A U.S. Marine corporal is killed during a joint U.S.–Australian training exercise in searing heat. :contentReference[oaicite:17]{index=17}", duration:"41 min", season:2, episode:9, tags:["Drama"] },
+  { title: "Sting in the Tail", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S2+E10+Sting+in+the+Tail", description: "The team races to find a missing stinger missile on the eve of a WWII commemoration ceremony. :contentReference[oaicite:18]{index=18}", duration:"41 min", season:2, episode:10, tags:["Action","Crime"] },
+
+  // Season 3 (partial: 4 episodes publicly listed)
+  { title: "Gut Instinct", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S3+E1+Gut+Instinct", description: "The discovery of two missing U.S. Navy aviators adrift in the Coral Sea leads the team to expose a sinister terrorist plot. :contentReference[oaicite:19]{index=19}", duration:"42 min", season:3, episode:1, tags:["Crime","Naval"] },
+  { title: "True Blue", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S3+E2+True+Blue", description: "Concerned about Blue’s strange behaviour, Doc breaks into her apartment and the team uncover a shocking revelation about one of their own. :contentReference[oaicite:20]{index=20}", duration:"43 min", season:3, episode:2, tags:["Drama","Spy"] },
+  { title: "Lost in Translation", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S3+E3+Lost+in+Translation", description: "The team’s hunt for a high-value U.S. target accused of murdering an Australian soldier takes an unexpected turn when the suspect claims to have evidence of a war crime. :contentReference[oaicite:21]{index=21}", duration:"42 min", season:3, episode:3, tags:["Crime","Drama"] },
+  { title: "The Truth is Outback", video: sampleMP4, image: "https://via.placeholder.com/300x450?text=S3+E4+The+Truth+is+Outback", description: "When a U.S. Navy pilot goes missing at a UFO hotspot in the Outback after being chased by blinding lights, the team must discover if the truth is really “out there.” :contentReference[oaicite:22]{index=22}", duration:"42 min", season:3, episode:4, tags:["Crime","Thriller"] }
+];
+
+// MP4 detector
+function isMP4(url) {
+  return /\.mp4($|\?)/i.test(url);
+}
+
+const container = document.getElementById('movies');
+const playbackModal = document.getElementById('playback-modal');
+const modalVideo = document.getElementById('modal-video');
+const modalTitle = document.getElementById('modal-title');
+const modalDescription = document.getElementById('modal-description');
+const seasonEpisode = document.getElementById('season-episode');
+const episodeDuration = document.getElementById('episode-duration');
+const closeModal = document.getElementById('close-modal');
+
+let currentSeason = 'all';
+let currentFilter   = 'All';
+
+function initPage() {
+  renderMovies();
+  document.querySelectorAll('.season-btn').forEach(btn => {
+    btn.addEventListener('click', function(){
+      document.querySelector('.season-btn.active').classList.remove('active','bg-blue-600','text-white');
+      this.classList.add('active','bg-blue-600','text-white');
+      currentSeason = this.dataset.season;
+      renderMovies();
+    });
+  });
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function(){
+      document.querySelector('.filter-btn.active').classList.remove('active','bg-blue-500','text-white');
+      this.classList.add('active','bg-blue-500','text-white');
+      currentFilter = this.textContent;
+      renderMovies();
+    });
+  });
+}
+
+function renderMovies() {
+  container.innerHTML = '';
+  let filtered = movies;
+  if (currentSeason !== 'all') {
+    filtered = filtered.filter(m => m.season == currentSeason);
+  }
+  if (currentFilter !== 'All') {
+    filtered = filtered.filter(m => m.tags.includes(currentFilter));
+  }
+  filtered.forEach((movie, i) => {
+    const card = document.createElement('div');
+    card.className = `movie-card fade-in delay-${i%5} glow-effect`;
+    card.innerHTML = `
+      <div class="relative group cursor-pointer overflow-hidden rounded-xl">
+        <img src="${movie.image}" class="w-full h-48 object-cover rounded-xl transition group-hover:scale-105">
+        <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex items-center justify-center text-blue-400 text-3xl"><i class="fas fa-play"></i></div>
+      </div>
+      <div class="mt-3 text-white font-medium">${movie.title}</div>
+      <div class="text-gray-400 text-sm">S${movie.season} • E${movie.episode} • ${movie.duration}</div>
+    `;
+    card.addEventListener('click', () => {
+      if (isMP4(movie.video)) {
+        openModal(movie);
+      } else {
+        window.location.href = `player.html?title=${encodeURIComponent(movie.title)}&video=${encodeURIComponent(movie.video)}`;
+      }
+    });
+    container.appendChild(card);
+  });
+}
+
+function openModal(m) {
+  modalTitle.textContent = m.title;
+  modalDescription.textContent = m.description;
+  seasonEpisode.textContent = `S${m.season} • E${m.episode}`;
+  episodeDuration.textContent = m.duration;
+  modalVideo.src = m.video;
+  playbackModal.classList.remove('hidden');
+}
+
+closeModal.onclick = () => {
+  playbackModal.classList.add('hidden');
+  modalVideo.pause();
+};
+
+window.addEventListener('DOMContentLoaded', initPage);
+</script>
+
+</body>
+</html>
