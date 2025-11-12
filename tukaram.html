@@ -135,6 +135,18 @@ body {
 <script>
 const movies = [
   { 
+    title: "Sant Tukaram", 
+    video: "https://www.youtube.com/embed/IQHpDpAG9hk",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvta5UrpekYQ2hwl3OAMqOw9V7FArH0iIbYi0O-JNRs_kBNpOjmEzG8vnNKS1f-ffl12U&usqp=CAU",
+    year: 1936
+  },
+  { 
+    title: "Tukaram", 
+    video: "https://streamtape.com/e/MrYrXzYAYVUmbBM/",
+    image: "https://images.plex.tv/photo?size=large-1280&url=https%3A%2F%2Fmetadata-static.plex.tv%2Fc%2Fgracenote%2Fc6a4001ae0abaabf16aeb0dd7d251d45.jpg",
+    year: 2012
+  },
+  { 
     title: "Abhanga Tukaram", 
     video: "https://streamtape.com/e/MrYrXzYAYVUmbBM/",
     image: "https://updatenownews.com/wp-content/uploads/2025/08/tukaram.jpg",
@@ -167,7 +179,20 @@ function playInModal(title,url){
     return;
   }
 
-  if(isYouTube(url)){window.open(url,'_blank');return;}
+  if (isYouTube(url)) {
+  // Embed YouTube video directly in the modal
+  const playerContainer = document.querySelector('.modal-player');
+  playerContainer.innerHTML = `
+    <iframe src="${url}?autoplay=1&modestbranding=1&rel=0" 
+            width="100%" height="100%" 
+            allowfullscreen 
+            allow="autoplay; encrypted-media"
+            frameborder="0">
+    </iframe>`;
+  showModal();
+  return;
+}
+
 
   if(isHls(url)){
     if(Hls.isSupported()){
