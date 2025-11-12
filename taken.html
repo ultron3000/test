@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Taken</title>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<!-- HLS.js for adaptive HLS playback -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.1/dist/hls.min.js"></script>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    :root {
+      --primary: #ffcc00;
+      --secondary: #111827;
+      --accent: #f59e0b;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: white;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    .movie-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: center;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .movie-card:hover {
+      transform: translateY(-8px) scale(1.03);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .search-input {
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    .search-input:focus {
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.5);
+    }
+    
+    .header-glow {
+      text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+    }
+    
+    .movie-poster {
+      aspect-ratio: 2/3;
+      transition: transform 0.5s ease;
+    }
+    
+    .movie-card:hover .movie-poster {
+      transform: scale(1.05);
+    }
+    
+    .category-tab {
+      transition: all 0.3s ease;
+    }
+    
+    .category-tab:hover {
+      transform: translateY(-2px);
+    }
+    
+    .category-tab.active {
+      background-color: var(--primary);
+      color: var(--secondary);
+      font-weight: 600;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #ffcc00;
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #f59e0b;
+    }
+    
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.6s ease forwards;
+    }
+    
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .delay-400 { animation-delay: 0.4s; }
+    
+    /* Modal styles (Panther-style richer overlay) */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+    }
+    .modal-card {
+      width: 95%;
+      max-width: 1100px;
+      background: linear-gradient(180deg, rgba(17,24,39,0.9), rgba(17,24,39,0.95));
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+      border: 1px solid rgba(255,204,0,0.06);
+    }
+    .modal-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      background: linear-gradient(90deg, rgba(0,0,0,0.2), transparent);
+    }
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight:600;
+      color: #ffea8a;
+    }
+    .modal-close-btn {
+      width:40px;height:40px;border-radius:999px;background:transparent;border:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;
+    }
+    .modal-player {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      background: black;
+    }
+    .modal-player video,
+    .modal-player iframe {
+      position:absolute;
+      top:0;left:0;width:100%;height:100%;
+      background:black;
+    }
+
+    /* small screens modal tweaks */
+    @media (max-width:640px) {
+      .modal-card { max-width: 96%; }
+      .modal-title { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body class="relative">
+<!-- Floating stars background -->
+<div class="fixed inset-0 overflow-hidden -z-10">
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/80"></div>
+  <div class="stars"></div>
+  <div class="stars2"></div>
+</div>
+
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+
+  <!-- Full-Width Video Header with Animated Logo -->
+  <div class="relative w-full h-[400px] md:h-[500px] overflow-hidden">
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden">
+      <iframe
+        src="https://www.youtube.com/embed/ryeav7mgGd0?autoplay=1&loop=1&mute=1&controls=0&playlist=ryeav7mgGd0"
+        frameborder="0"
+        allow="autoplay; fullscreen"
+        class="absolute top-1/2 left-1/2 w-[177.78vh] h-[100vh] min-w-full min-h-full -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+      ></iframe>
+    </div>
+  </div>
+
+    <!-- Animated Logo at Top-Left -->
+  <img 
+    src="https://beam-images.warnermediacdn.com/BEAM_LWM_DELIVERABLES/cd3b95af-5827-4c8a-b73a-378ea6dda440/2f09da2e-7687-4be1-adb9-ea62f3a30b84?host=wbd-images.prod-vod.h264.io&partner=beamcom&w=4320" 
+    alt="Kung Fu Panda Logo" 
+    class="absolute top-4 left-4 h-16 md:h-24 animate-logo z-10"
+  />
+</div>
+
+<style>
+  /* Animated Logo */
+  .animate-logo {
+    animation: float-pulse 3s ease-in-out infinite, glow-logo 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes float-pulse {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes glow-logo {
+    0% { filter: drop-shadow(0 0 2px #fffa65) drop-shadow(0 0 4px #ffba00); }
+    50% { filter: drop-shadow(0 0 6px #fffa65) drop-shadow(0 0 12px #ffba00); }
+    100% { filter: drop-shadow(0 0 2px #fffa65) drop-shadow(0 0 4px #ffba00); }
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .animate-logo { height: 4rem; top: 1rem; left: 1rem; }
+  }
+</style>
+
+  <!-- Movies Grid -->
+  <div class="mb-12 mt-8">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6" id="movies"></div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="py-6 border-t border-gray-800 text-center text-gray-400">
+    <p>©  Taken Universe</p>
+    <div class="flex justify-center space-x-4 mt-2">
+      <a class="hover:text-yellow-400 transition" href="#"><i class="fab fa-facebook"></i></a>
+      <a class="hover:text-yellow-400 transition" href="#"><i class="fab fa-twitter"></i></a>
+      <a class="hover:text-yellow-400 transition" href="#"><i class="fab fa-instagram"></i></a>
+      <a class="hover:text-yellow-400 transition" href="#"><i class="fab fa-youtube"></i></a>
+    </div>
+  </footer>
+</div>
+
+<!-- Modal Player (Panther-style) -->
+<div id="video-modal" class="modal-overlay hidden">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-header">
+      <div id="modal-title" class="modal-title"></div>
+      <button id="close-video-modal" class="modal-close-btn" aria-label="Close player">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-player">
+      <!-- video element: we will attach HLS or set src directly -->
+      <video id="modal-video" class="w-full h-full" controls playsinline></video>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== MOVIES LIST (unchanged structure) ===== */
+const movies = [
+  { title: "Taken", video: "https://svz.stellarpathfinance.cfd:443/v4/xy/bhxdg/index-f1-v1-a1.txt", image: "https://image.tmdb.org/t/p/original/g7CTgmP6Jr7FwVDg65I9RqVeqIz.jpg", category: "other", year: 2008 },
+  { title: "Taken 2", video: "https://s2.phim1280.tv/20231024/zXi5UQM6/index.m3u8", image: "https://image.tmdb.org/t/p/original/mGRtQS39DYIu6gXu5mXQsXFGZPO.jpg", category: "other", year: 2012 },
+  { title: "Taken 3", video: "https://sad.clarionconsultancy.sbs:443/v4/s93/n5qmd/index-f2-v1-a1.txt", image: "https://image.tmdb.org/t/p/original/6BPmAKAbi38qp7Gp2sJm8CliXVa.jpg", category: "other", year: 2014 },
+];
+
+/* ===== Player Helpers (Panther-style logic integrated) ===== */
+const container = document.getElementById('movies');
+const videoModal = document.getElementById('video-modal');
+const modalVideo = document.getElementById('modal-video');
+const modalTitle = document.getElementById('modal-title');
+const closeBtn = document.getElementById('close-video-modal');
+
+let currentHls = null;
+
+function isHls(url){
+  if(!url) return false;
+  // check typical HLS patterns (.m3u8 or index/*.txt-like manifest used in your streams)
+  return url.includes('.m3u8') || url.toLowerCase().includes('index-') || /index.*\.txt/i.test(url) || url.includes('/index/');
+}
+function isYouTube(url){
+  if(!url) return false;
+  return url.includes('youtube.com/watch') || url.includes('youtu.be') || url.includes('youtube.com/embed');
+}
+function isMP4(url){
+  if(!url) return false;
+  return /\.mp4($|\?)/i.test(url) || url.toLowerCase().includes('.mp4');
+}
+
+/* Show / hide modal */
+function showModal(){ videoModal.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function hideModal(){ videoModal.classList.add('hidden'); document.body.style.overflow=''; }
+
+/* Main: play any video (HLS/MP4/YouTube) inline if possible */
+function playInModal(title, url){
+  // Clean previous HLS
+  if(currentHls){ try{ currentHls.destroy(); }catch(e){} currentHls = null; }
+
+  // Reset video element
+  try{ modalVideo.pause(); }catch(e){}
+  modalVideo.removeAttribute('src');
+  modalVideo.load();
+  modalTitle.textContent = title || '';
+
+  if(!url || url.trim()===''){
+    modalTitle.textContent = (title||'') + ' — No playable URL provided';
+    showModal();
+    return;
+  }
+
+  // YouTube: open in new tab or use embed iframe. We'll open embed in new tab for now.
+  if(isYouTube(url)){
+    // If an embed URL is present, open inline iframe fallback (simpler: open new tab to avoid cross-origin)
+    // User can change this to an iframe insertion if they want inline YouTube playback.
+    window.open(url, '_blank');
+    return;
+  }
+
+  // HLS streams
+  if(isHls(url)){
+    if(Hls.isSupported()){
+      currentHls = new Hls();
+      currentHls.loadSource(url);
+      currentHls.attachMedia(modalVideo);
+      currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
+        showModal();
+        modalVideo.play().catch(()=>{ /* autoplay may be blocked; user can press play */ });
+      });
+      currentHls.on(Hls.Events.ERROR, (event, data) => {
+        console.warn('Hls error', data);
+        // On fatal error, fallback to setting src directly
+        if(data && data.fatal){
+          try{
+            currentHls.destroy();
+          }catch(e){}
+          currentHls = null;
+          modalVideo.src = url;
+          showModal();
+        }
+      });
+    } else {
+      // Browser supports native HLS (Safari) — set src directly
+      modalVideo.src = url;
+      showModal();
+      modalVideo.play().catch(()=>{});
+    }
+    return;
+  }
+
+  // MP4 or direct file
+  if(isMP4(url) || url.startsWith('blob:') || url.includes('stream')){
+    modalVideo.src = url;
+    showModal();
+    modalVideo.play().catch(()=>{ /* autoplay possibly blocked */});
+    return;
+  }
+
+  // Fallback: try setting as src
+  modalVideo.src = url;
+  showModal();
+  modalVideo.play().catch(()=>{});
+}
+
+/* Close / cleanup */
+function closePlayer(){
+  if(currentHls){
+    try{ currentHls.destroy(); }catch(e){}
+    currentHls = null;
+  }
+  try{ modalVideo.pause(); }catch(e){}
+  modalVideo.removeAttribute('src');
+  modalVideo.load();
+  hideModal();
+}
+
+/* Close events */
+closeBtn.addEventListener('click', closePlayer);
+videoModal.addEventListener('click', (e) => {
+  // close if click outside modal card area
+  if(e.target === videoModal) closePlayer();
+});
+
+/* Build movie cards and wire up play */
+function renderMovies(moviesToRender){
+  container.innerHTML = '';
+  moviesToRender.forEach((movie, index) => {
+    const delayClass = `delay-${(index % 5) * 100}`;
+    const div = document.createElement('div');
+    div.className = `movie-card animate-fade-in ${delayClass} rounded-xl overflow-hidden bg-gray-800 hover:bg-gray-700 cursor-pointer relative group`;
+    div.innerHTML = `
+      <div class="relative overflow-hidden rounded-t-lg">
+        <img src="${movie.image}" alt="${movie.title}" class="w-full h-full object-cover movie-poster">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+          <button class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-full transition transform hover:scale-105">
+            <i class="fas fa-play mr-2"></i> Watch Now
+          </button>
+        </div>
+      </div>
+      <div class="p-4">
+        <h3 class="font-semibold text-lg truncate">${movie.title}</h3>
+        <div class="flex justify-between items-center mt-2 text-sm text-gray-400">
+          <span>${movie.year || ''}</span>
+        </div>
+      </div>
+    `;
+    div.addEventListener('click', () => {
+      // Use integrated player for HLS and MP4. For YouTube, open new tab.
+      if(isYouTube(movie.video)){
+        // Optionally replace this with inline iframe insertion
+        window.open(movie.video, '_blank');
+      } else {
+        playInModal(movie.title, movie.video);
+      }
+    });
+    container.appendChild(div);
+  });
+}
+
+/* Render initial */
+renderMovies(movies);
+
+/* Safety: guard for missing elements referenced elsewhere (original script had searchBar references) */
+(function safeGuards(){
+  const searchBar = document.getElementById('searchBar');
+  if(searchBar){
+    searchBar.addEventListener('input', function(){
+      const searchTerm = this.value.toLowerCase();
+      const filtered = movies.filter(m => m.title.toLowerCase().includes(searchTerm));
+      renderMovies(filtered);
+    });
+  }
+})();
+
+/* Floating stars background (unchanged) */
+function createStars(container, count, sizeRange, durationRange) {
+  if(!container) return;
+  for (let i = 0; i < count; i++) {
+    const star = document.createElement('div');
+    star.className = 'absolute rounded-full bg-white';
+    const left = Math.random() * 100;
+    const top = Math.random() * 100;
+    const size = sizeRange[0] + Math.random() * (sizeRange[1] - sizeRange[0]);
+    const duration = durationRange[0] + Math.random() * (durationRange[1] - durationRange[0]);
+    star.style.left = `${left}%`;
+    star.style.top = `${top}%`;
+    star.style.width = `${size}px`;
+    star.style.height = `${size}px`;
+    star.style.opacity = Math.random() * 0.5 + 0.1;
+    star.style.animation = `float ${duration}s infinite ease-in-out alternate`;
+    star.style.animationDelay = `${Math.random() * 5}s`;
+    container.appendChild(star);
+  }
+}
+const starsContainer = document.querySelector('.stars');
+const starsContainer2 = document.querySelector('.stars2');
+createStars(starsContainer, 50, [1, 3], [5, 15]);
+createStars(starsContainer2, 30, [2, 4], [10, 20]);
+
+const style = document.createElement('style');
+style.innerHTML = `
+  @keyframes float {
+    0% { transform: translateY(0) translateX(0); }
+    50% { transform: translateY(-20px) translateX(10px); }
+    100% { transform: translateY(0) translateX(0); }
+  }
+`;
+document.head.appendChild(style);
+</script>
+
+<!-- Canvas for click sparks -->
+<canvas id="sparkCanvasPage"></canvas>
+
+<style>
+#sparkCanvasPage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10000;
+}
+</style>
+
+<script>
+// Click sparks for full page (unchanged)
+const canvas = document.getElementById('sparkCanvasPage');
+const ctx = canvas.getContext('2d');
+const sparks = [];
+const duration = 300;       // duration of each spark
+const sparkCount = 6;       // sparks per click
+const sparkSize = 8;        // line length
+const sparkRadius = 12;     // max distance
+const sparkColor = '#00f2ff'; // color of sparks
+const easing = t => t*(2-t);  // ease-out
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const now = performance.now();
+  for(let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i];
+    const elapsed = now - s.startTime;
+    if(elapsed >= duration) { sparks.splice(i,1); continue; }
+    const progress = elapsed / duration;
+    const eased = easing(progress);
+    const dist = eased * sparkRadius;
+    const line = sparkSize * (1 - eased);
+    const x1 = s.x + dist * Math.cos(s.angle);
+    const y1 = s.y + dist * Math.sin(s.angle);
+    const x2 = s.x + (dist + line) * Math.cos(s.angle);
+    const y2 = s.y + (dist + line) * Math.sin(s.angle);
+    ctx.strokeStyle = sparkColor;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
+  }
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+document.addEventListener('click', e => {
+  const x = e.clientX;
+  const y = e.clientY;
+  for(let i=0;i<sparkCount;i++){
+    sparks.push({
+      x, 
+      y, 
+      angle: (2*Math.PI*i)/sparkCount, 
+      startTime: performance.now()
+    });
+  }
+});
+</script>
+</body>
+</html>
