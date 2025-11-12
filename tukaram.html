@@ -166,47 +166,59 @@ function isHls(u){return u.includes('.m3u8')||u.includes('index-')||/index.*\.tx
 function isMP4(u){return /\.mp4($|\?)/i.test(u);}
 function isYouTube(u){return u.includes('youtu');}
 
-function playInModal(title,url){
-  if(currentHls){try{currentHls.destroy();}catch(e){}currentHls=null;}
-  const playerContainer=document.querySelector('.modal-player');
-  const modalVideo=document.getElementById('modal-video');
-  modalTitle.textContent=title||'';
+function playInModal(title, url) {
+  if (currentHls) {
+    try { currentHls.destroy(); } catch (e) {}
+    currentHls = null;
+  }
+  const playerContainer = document.querySelector('.modal-player');
+  const modalVideo = document.getElementById('modal-video');
+  modalTitle.textContent = title || '';
 
-  // Handle Streamtape embeds
-  if(url.includes('streamtape.com')){
-    playerContainer.innerHTML=`<iframe src="${url}" width="100%" height="100%" allowfullscreen allowtransparency allow="autoplay" scrolling="no" frameborder="0"></iframe>`;
+  // Streamtape
+  if (url.includes('streamtape.com')) {
+    playerContainer.innerHTML = `<iframe src="${url}" width="100%" height="100%" allowfullscreen allowtransparency allow="autoplay" scrolling="no" frameborder="0"></iframe>`;
     showModal();
     return;
   }
 
+  // YouTube
   if (isYouTube(url)) {
-  // Embed YouTube video directly in the modal
-  const playerContainer = document.querySelector('.modal-player');
-  playerContainer.innerHTML = `
-    <iframe src="${url}?autoplay=1&modestbranding=1&rel=0" 
-            width="100%" height="100%" 
-            allowfullscreen 
-            allow="autoplay; encrypted-media"
-            frameborder="0">
-    </iframe>`;
-  showModal();
-  return;
-}
-
-
-  if(isHls(url)){
-    if(Hls.isSupported()){
-      currentHls=new Hls();currentHls.loadSource(url);currentHls.attachMedia(modalVideo);
-      currentHls.on(Hls.Events.MANIFEST_PARSED,()=>{showModal();modalVideo.play().catch(()=>{});});
-    } else {modalVideo.src=url;showModal();modalVideo.play().catch(()=>{});}
+    playerContainer.innerHTML = `
+      <iframe src="${url}?autoplay=1&modestbranding=1&rel=0"
+              width="100%" height="100%"
+              allowfullscreen
+              allow="autoplay; encrypted-media"
+              frameborder="0"></iframe>`;
+    showModal();
     return;
   }
 
-  if(isMP4(url)){
-    modalVideo.src=url;showModal();modalVideo.play().catch(()=>{});return;
+  // HLS
+  if (isHls(url)) {
+    if (Hls.isSupported()) {
+      currentHls = new Hls();
+      currentHls.loadSource(url);
+      currentHls.attachMedia(modalVideo);
+      currentHls.on(Hls.Events.MANIFEST_PARSED, () => { showModal(); modalVideo.play().catch(() => {}); });
+    } else {
+      modalVideo.src = url;
+      showModal();
+      modalVideo.play().catch(() => {});
+    }
+    return;
   }
 
-  modalVideo.src=url;showModal();modalVideo.play().catch(()=>{});
+  // MP4
+  if (isMP4(url)) {
+    modalVideo.src = url;
+    showModal();
+    modalVideo.play().catch(() => {});
+    return;
+  }
+
+  // Redirect to player.html for other formats
+  window.location.href = `player.html?title=${encodeURIComponent(title)}&video=${encodeURIComponent(url)}`;
 }
 
 function closePlayer(){
