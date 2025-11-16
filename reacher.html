@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reacher (2022)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.1/dist/hls.min.js"></script>
+</head>
+<body class="bg-black text-gray-100 min-h-screen">
+
+<header class="sticky top-0 z-50 bg-black bg-opacity-90 backdrop-blur-sm border-b border-blue-600/20">
+  <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-2">
+      <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+        <i class="fas fa-user-shield text-white text-xl"></i>
+      </div>
+      <h1 class="text-2xl font-bold gradient-text">Reacher (2022)</h1>
+    </div>
+    <button id="search-btn" class="p-2 rounded-full hover:bg-gray-800 transition"><i class="fas fa-search text-blue-300"></i></button>
+  </div>
+  <div id="search-bar" class="hidden px-4 pb-4">
+    <div class="relative">
+      <input type="text" placeholder="Search episodes..." class="w-full bg-gray-900 border border-blue-600/30 rounded-full py-2 px-4 pl-10 text-white">
+      <i class="fas fa-search absolute left-3 top-3 text-blue-300"></i>
+    </div>
+  </div>
+</header>
+
+<main class="container mx-auto px-4 py-8">
+  <section class="mb-12 relative overflow-hidden rounded-xl h-64 md:h-96">
+    <video autoplay muted loop class="showcase-video">
+      <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" type="video/mp4">
+    </video>
+    <div class="showcase-overlay"></div>
+    <div class="relative h-full flex flex-col justify-end p-6 md:p-8">
+      <p class="text-gray-300 mb-4 max-w-lg">Former military police officer Jack Reacher drifts across America, finding himself pulled into dangerous conspiracies everywhere he goes. Based on Lee Child's bestselling novels.</p>
+    </div>
+  </section>
+
+  <div class="flex overflow-x-auto mb-6 pb-2 space-x-2">
+    <button class="season-btn active bg-blue-600 text-white px-4 py-2 rounded-full" data-season="all">All Episodes</button>
+    <button class="season-btn bg-gray-800 px-4 py-2 rounded-full" data-season="1">Season 1</button>
+    <button class="season-btn bg-gray-800 px-4 py-2 rounded-full" data-season="2">Season 2</button>
+    <button class="season-btn bg-gray-800 px-4 py-2 rounded-full" data-season="3">Season 3</button>
+  </div>
+
+  <section>
+    <h3 class="text-xl font-semibold mb-6"><i class="fas fa-list-ul text-blue-400 mr-2"></i>Episodes</h3>
+    <div id="movies" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"></div>
+  </section>
+</main>
+
+<footer class="bg-gray-900 border-t border-gray-800 mt-12 py-8 text-center text-gray-400">© Reacher – Fan Listing</footer>
+
+<div id="video-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div id="modal-title" class="modal-title"></div>
+      <button id="close-video-modal" class="modal-close-btn"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-player"><video id="modal-video" controls playsinline></video></div>
+  </div>
+</div>
+
+<script>
+const sampleMP4 = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+
+const movies = [
+  // Season 1 (8 episodes)
+  { title:"Welcome to Margrave", season:1, episode:1, duration:"54 min", image:"https://via.placeholder.com/300x169?text=S1E1", video:"sampleMP4" },
+  { title:"First Dance", season:1, episode:2, duration:"52 min", image:"https://via.placeholder.com/300x169?text=S1E2", video:"sampleMP4" },
+  { title:"Spoonful", season:1, episode:3, duration:"51 min", image:"https://via.placeholder.com/300x169?text=S1E3", video:"sampleMP4" },
+  { title:"In a Tree", season:1, episode:4, duration:"49 min", image:"https://via.placeholder.com/300x169?text=S1E4", video:"sampleMP4" },
+  { title:"No Apologies", season:1, episode:5, duration:"52 min", image:"https://via.placeholder.com/300x169?text=S1E5", video:"sampleMP4" },
+  { title:"Papier", season:1, episode:6, duration:"50 min", image:"https://via.placeholder.com/300x169?text=S1E6", video:"sampleMP4" },
+  { title:"Reacher Said Nothing", season:1, episode:7, duration:"54 min", image:"https://via.placeholder.com/300x169?text=S1E7", video:"sampleMP4" },
+  { title:"Pie", season:1, episode:8, duration:"56 min", image:"https://via.placeholder.com/300x169?text=S1E8", video:"sampleMP4" },
+
+  // Season 2 (8 episodes)
+  { title:"ATM", season:2, episode:1, duration:"50 min", image:"https://via.placeholder.com/300x169?text=S2E1", video:"sampleMP4" },
+  { title:"What Happens in Atlantic City", season:2, episode:2, duration:"49 min", image:"https://via.placeholder.com/300x169?text=S2E2", video:"sampleMP4" },
+  { title:"Picture Says a Thousand Words", season:2, episode:3, duration:"48 min", image:"https://via.placeholder.com/300x169?text=S2E3", video:"sampleMP4" },
+  { title:"A Night at the Symphony", season:2, episode:4, duration:"50 min", image:"https://via.placeholder.com/300x169?text=S2E4", video:"sampleMP4" },
+  { title:"Burial", season:2, episode:5, duration:"52 min", image:"https://via.placeholder.com/300x169?text=S2E5", video:"sampleMP4" },
+  { title:"New York's Finest", season:2, episode:6, duration:"49 min", image:"https://via.placeholder.com/300x169?text=S2E6", video:"sampleMP4" },
+  { title:"The Man Goes Through", season:2, episode:7, duration:"55 min", image:"https://via.placeholder.com/300x169?text=S2E7", video:"sampleMP4" },
+  { title:"Fly Boy", season:2, episode:8, duration:"57 min", image:"https://via.placeholder.com/300x169?text=S2E8", video:"sampleMP4" },
+
+  // Season 3 (placeholder)
+  { title:"Persuader", season:3, episode:1, duration:"50 min", image:"https://via.placeholder.com/300x169?text=S3E1", video:"sampleMP4" },
+  { title:"Truckin'", season:3, episode:2, duration:"50 min", image:"https://via.placeholder.com/300x169?text=S3E2", video:"sampleMP4" },
+  { title:"Number 2 with a Bullet", season:3, episode:3, duration:"50 min", image:"https://via.placeholder.com/300x169?text=S3E3", video:"sampleMP4" },
+  { title:"Dominique", season:3, episode:4, duration:"50 min", image:"https://via.placeholder.com/300x169?text=S3E4", video:"sampleMP4" },
+  { title:"Smackdown", season:3, episode:5, duration:"50 min", image:"https://via.placeholder.com/300x169?text=S3E5", video:"sampleMP4" },
+  { title:"Smoke on the Water", season:3, episode:6, duration:"50 min", image:"https://via.placeholder.com/300x169?text=S3E6", video:"sampleMP4" },
+  { title:"L.A. Story", season:3, episode:7, duration:"50 min", image:"https://via.placeholder.com/300x169?text=S3E7", video:"sampleMP4" },
+  { title:"Unfinished Business", season:3, episode:8, duration:"50 min", image:"https://via.placeholder.com/300x169?text=S3E8", video:"sampleMP4" }
+];
+
+let currentSeason='all';
+
+function renderMovies(){
+  const container=document.getElementById('movies');
+  container.innerHTML='';
+  const filtered=movies.filter(m=>currentSeason==='all'||m.season==currentSeason);
+  filtered.forEach(m=>{
+    const card=document.createElement('div');
+    card.className='cursor-pointer glow-effect fade-in';
+    card.innerHTML=`<div class='relative overflow-hidden rounded-xl'>
+      <img src="${m.image}" class="w-full h-48 object-cover rounded-xl">
+    </div>
+    <div class='mt-3 text-white font-medium'>${m.title}</div>
+    <div class='text-gray-400 text-sm'>S${m.season} • E${m.episode} • ${m.duration}</div>`;
+    card.onclick=()=>playInModal(m.title,m.video);
+    container.appendChild(card);
+  });
+}
+renderMovies();
+
+document.querySelectorAll('.season-btn').forEach(btn=>{
+  btn.onclick=function(){
+    document.querySelector('.season-btn.active').classList.remove('active','bg-blue-600','text-white');
+    this.classList.add('active','bg-blue-600','text-white');
+    currentSeason=this.dataset.season;
+    renderMovies();
+  };
+});
+
+function playInModal(title,url){
+  const modal=document.getElementById('video-modal');
+  const mv=document.getElementById('modal-video');
+  document.getElementById('modal-title').textContent=title;
+  mv.src=url;
+  modal.classList.remove('hidden');
+  mv.play().catch(()=>{});
+}
+
+document.getElementById('close-video-modal').onclick=function(){
+  const modal=document.getElementById('video-modal');
+  const mv=document.getElementById('modal-video');
+  mv.pause();
+  mv.src="";
+  modal.classList.add('hidden');
+};
+</script>
+</body>
+</html>
