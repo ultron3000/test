@@ -1,71 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Reacher (2022)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.1/dist/hls.min.js"></script>
-</head>
-<body class="bg-black text-gray-100 min-h-screen">
+<meta charset="UTF-8">
+<title>Reacher Series – Watch Online</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<header class="sticky top-0 z-50 bg-black bg-opacity-90 backdrop-blur-sm border-b border-blue-600/20">
+<!-- Tailwind / Icons / HLS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.1/dist/hls.min.js"></script>
+
+<style>
+body {
+  background: #020617;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* EPISODE CARD */
+.episode-card {
+  transition: all .3s ease;
+}
+.episode-card:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 20px 30px rgba(0,0,0,.5);
+}
+
+/* MODAL */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2000;
+}
+
+.modal-card {
+  width: 95%; max-width: 1100px;
+  background: rgba(3,7,18,0.9);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(0,170,255,.25);
+  box-shadow: 0 0 20px rgba(0,170,255,.4);
+  backdrop-filter: blur(12px);
+}
+
+.modal-header {
+  padding: 12px 18px;
+  background: rgba(0,0,0,.2);
+  border-bottom: 1px solid rgba(0,170,255,.15);
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.modal-title {
+  font-size: 1.2rem; font-weight: 600; color: #7dd3fc;
+}
+
+.modal-close-btn {
+  width: 38px; height: 38px;
+  border-radius: 50%; background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+
+.modal-player {
+  position: relative; padding-bottom: 56.25%;
+  height: 0; background: black;
+}
+
+.modal-player video,
+.modal-player iframe {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+}
+
+/* HEADER TITLE */
+.gradient-text {
+  background: linear-gradient(to right,#3b82f6,#06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+</style>
+</head>
+
+<body class="text-gray-100">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-blue-600/30">
   <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-    <div class="flex items-center space-x-2">
-      <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-        <i class="fas fa-user-shield text-white text-xl"></i>
+    <div class="flex items-center space-x-3">
+      <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-600/50">
+        <i class="fas fa-shield-alt text-white text-xl"></i>
       </div>
-      <h1 class="text-2xl font-bold gradient-text">Reacher (2022)</h1>
-    </div>
-    <button id="search-btn" class="p-2 rounded-full hover:bg-gray-800 transition"><i class="fas fa-search text-blue-300"></i></button>
-  </div>
-  <div id="search-bar" class="hidden px-4 pb-4">
-    <div class="relative">
-      <input type="text" placeholder="Search episodes..." class="w-full bg-gray-900 border border-blue-600/30 rounded-full py-2 px-4 pl-10 text-white">
-      <i class="fas fa-search absolute left-3 top-3 text-blue-300"></i>
+      <h1 class="text-3xl font-bold gradient-text">Reacher – All Seasons</h1>
     </div>
   </div>
 </header>
 
-<main class="container mx-auto px-4 py-8">
-  <section class="mb-12 relative overflow-hidden rounded-xl h-64 md:h-96">
-    <video autoplay muted loop class="showcase-video">
-      <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" type="video/mp4">
-    </video>
-    <div class="showcase-overlay"></div>
-    <div class="relative h-full flex flex-col justify-end p-6 md:p-8">
-      <p class="text-gray-300 mb-4 max-w-lg">Former military police officer Jack Reacher drifts across America, finding himself pulled into dangerous conspiracies everywhere he goes. Based on Lee Child's bestselling novels.</p>
-    </div>
-  </section>
+<!-- HERO -->
+<section class="relative h-64 md:h-96 overflow-hidden">
+  <video autoplay muted loop class="absolute inset-0 w-full h-full object-cover opacity-60">
+    <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4">
+  </video>
 
-  <div class="flex overflow-x-auto mb-6 pb-2 space-x-2">
-    <button class="season-btn active bg-blue-600 text-white px-4 py-2 rounded-full" data-season="all">All Episodes</button>
-    <button class="season-btn bg-gray-800 px-4 py-2 rounded-full" data-season="1">Season 1</button>
-    <button class="season-btn bg-gray-800 px-4 py-2 rounded-full" data-season="2">Season 2</button>
-    <button class="season-btn bg-gray-800 px-4 py-2 rounded-full" data-season="3">Season 3</button>
+  <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
+
+  <div class="absolute bottom-6 left-6 max-w-xl">
+    <p class="text-gray-300 text-lg">Former military police officer Jack Reacher drifts across America and becomes entangled in deadly conspiracies.</p>
   </div>
+</section>
 
-  <section>
-    <h3 class="text-xl font-semibold mb-6"><i class="fas fa-list-ul text-blue-400 mr-2"></i>Episodes</h3>
-    <div id="movies" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"></div>
-  </section>
-</main>
+<!-- SEASON FILTER -->
+<div class="container mx-auto px-4 py-6 flex overflow-x-auto space-x-3">
+  <button class="season-btn bg-blue-600 text-white px-5 py-2 rounded-full" data-season="all">All</button>
+  <button class="season-btn bg-gray-800 px-5 py-2 rounded-full" data-season="1">Season 1</button>
+  <button class="season-btn bg-gray-800 px-5 py-2 rounded-full" data-season="2">Season 2</button>
+  <button class="season-btn bg-gray-800 px-5 py-2 rounded-full" data-season="3">Season 3</button>
+</div>
 
-<footer class="bg-gray-900 border-t border-gray-800 mt-12 py-8 text-center text-gray-400">© Reacher – Fan Listing</footer>
+<!-- EPISODES GRID -->
+<div class="container mx-auto px-4">
+  <div id="episodes" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
+</div>
 
+<footer class="text-center text-gray-500 py-10 mt-10">© Reacher – Fan Project</footer>
+
+<!-- MODAL -->
 <div id="video-modal" class="modal-overlay hidden">
   <div class="modal-card">
     <div class="modal-header">
       <div id="modal-title" class="modal-title"></div>
       <button id="close-video-modal" class="modal-close-btn"><i class="fas fa-times"></i></button>
     </div>
-    <div class="modal-player"><video id="modal-video" controls playsinline></video></div>
+    <div class="modal-player">
+      <video id="modal-video" controls playsinline></video>
+    </div>
   </div>
 </div>
 
 <script>
-const sampleMP4 = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+/* -------------------------
+   EPISODES LIST
+------------------------- */
 
 const movies = [
   // Season 1 (8 episodes)
@@ -99,51 +174,119 @@ const movies = [
   { title:"Unfinished Business", season:3, episode:8, duration:"50 min", image:"https://via.placeholder.com/300x169?text=S3E8", video:"sampleMP4" }
 ];
 
-let currentSeason='all';
+/* -------------------------
+   RENDER EPISODES
+------------------------- */
 
-function renderMovies(){
-  const container=document.getElementById('movies');
-  container.innerHTML='';
-  const filtered=movies.filter(m=>currentSeason==='all'||m.season==currentSeason);
-  filtered.forEach(m=>{
-    const card=document.createElement('div');
-    card.className='cursor-pointer glow-effect fade-in';
-    card.innerHTML=`<div class='relative overflow-hidden rounded-xl'>
-      <img src="${m.image}" class="w-full h-48 object-cover rounded-xl">
-    </div>
-    <div class='mt-3 text-white font-medium'>${m.title}</div>
-    <div class='text-gray-400 text-sm'>S${m.season} • E${m.episode} • ${m.duration}</div>`;
-    card.onclick=()=>playInModal(m.title,m.video);
-    container.appendChild(card);
+let currentSeason = "all";
+
+function renderEpisodes() {
+  const ep = document.getElementById("episodes");
+  ep.innerHTML = "";
+
+  const list = movies.filter(m => currentSeason === "all" || m.season == currentSeason);
+
+  list.forEach(m => {
+    let div = document.createElement("div");
+    div.className = "episode-card bg-gray-900/70 p-3 rounded-xl cursor-pointer";
+
+    div.innerHTML = `
+      <img src="${m.image}" class="w-full h-36 object-cover rounded-lg">
+      <h3 class="mt-2 font-semibold text-white text-sm">${m.title}</h3>
+      <p class="text-gray-400 text-xs">S${m.season} • E${m.episode} • ${m.duration}</p>
+    `;
+
+    div.onclick = () => playInModal(m.title, m.video);
+    ep.appendChild(div);
   });
 }
-renderMovies();
 
-document.querySelectorAll('.season-btn').forEach(btn=>{
-  btn.onclick=function(){
-    document.querySelector('.season-btn.active').classList.remove('active','bg-blue-600','text-white');
-    this.classList.add('active','bg-blue-600','text-white');
-    currentSeason=this.dataset.season;
-    renderMovies();
+renderEpisodes();
+
+/* Season Switch */
+document.querySelectorAll(".season-btn").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelector(".season-btn.bg-blue-600")?.classList.remove("bg-blue-600","text-white");
+    btn.classList.add("bg-blue-600","text-white");
+    currentSeason = btn.dataset.season;
+    renderEpisodes();
   };
 });
 
-function playInModal(title,url){
-  const modal=document.getElementById('video-modal');
-  const mv=document.getElementById('modal-video');
-  document.getElementById('modal-title').textContent=title;
-  mv.src=url;
-  modal.classList.remove('hidden');
-  mv.play().catch(()=>{});
+/* -------------------------
+   VIDEO PLAYER LOGIC (Tukaram)
+------------------------- */
+
+let currentHls = null;
+
+function isYouTube(u) { return u.includes("youtu"); }
+function isMP4(u) { return /\.mp4/.test(u); }
+function isHls(u) { return u.includes(".m3u8") || u.includes("index"); }
+
+function playInModal(title, url) {
+  const modal = document.getElementById("video-modal");
+  const titleEl = document.getElementById("modal-title");
+  const player = document.querySelector(".modal-player");
+
+  titleEl.textContent = title;
+
+  if (currentHls) { try { currentHls.destroy(); } catch(e){} currentHls = null; }
+
+  // StreamTape
+  if (url.includes("streamtape.com")) {
+    player.innerHTML = `<iframe src="${url}" frameborder="0" allowfullscreen class="w-full h-full"></iframe>`;
+    modal.classList.remove("hidden");
+    return;
+  }
+
+  // YouTube
+  if (isYouTube(url)) {
+    player.innerHTML = `<iframe src="${url}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen class="w-full h-full"></iframe>`;
+    modal.classList.remove("hidden");
+    return;
+  }
+
+  // HLS
+  if (isHls(url)) {
+    player.innerHTML = `<video id="modal-video" controls playsinline></video>`;
+    let mv = document.getElementById("modal-video");
+
+    if (Hls.isSupported()) {
+      currentHls = new Hls();
+      currentHls.loadSource(url);
+      currentHls.attachMedia(mv);
+      currentHls.on(Hls.Events.MANIFEST_PARSED, () => mv.play());
+    } else {
+      mv.src = url;
+      mv.play();
+    }
+
+    modal.classList.remove("hidden");
+    return;
+  }
+
+  // MP4
+  if (isMP4(url)) {
+    player.innerHTML = `<video id="modal-video" controls playsinline></video>`;
+    let mv = document.getElementById("modal-video");
+    mv.src = url;
+    mv.play();
+    modal.classList.remove("hidden");
+    return;
+  }
 }
 
-document.getElementById('close-video-modal').onclick=function(){
-  const modal=document.getElementById('video-modal');
-  const mv=document.getElementById('modal-video');
-  mv.pause();
-  mv.src="";
-  modal.classList.add('hidden');
+/* Close Modal */
+document.getElementById("close-video-modal").onclick = () => {
+  const modal = document.getElementById("video-modal");
+  const player = document.querySelector(".modal-player");
+
+  if (currentHls) { try { currentHls.destroy(); } catch(e){} currentHls = null; }
+
+  player.innerHTML = `<video id="modal-video" controls playsinline></video>`;
+  modal.classList.add("hidden");
 };
 </script>
+
 </body>
 </html>
