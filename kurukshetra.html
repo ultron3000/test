@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Kurukshetra</title>
+  <title>Kurukshetra 2025</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -10,61 +10,84 @@
   <script async src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 
   <style>
-    body { background: #0b0c0e; color: #eaeaea; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-    header, footer { background: #121517; }
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #111; }
-    ::-webkit-scrollbar-thumb { background: #0077cc; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #0099ff; }
+    /* -----------------------------
+       Kurukshetra 2025 Theme (complete theme block)
+       Replace only this block if you want to change theme later
+       ----------------------------- */
 
+    /* Base */
+    body { background: #120804; color: #f6e7c5; font-family: 'Cinzel', serif; }
+    header, footer { background: #1e0f06; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #2a160b; }
+    ::-webkit-scrollbar-thumb { background: #cfa43a; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #e7bf55; }
+
+    /* Fade in animation */
     .fade-in { animation: fadeIn 0.45s ease-out forwards; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* Glow battlefield vibe */
     .glow-effect { position: relative; }
     .glow-effect::after {
       content: ''; position: absolute; inset: 0; border-radius: 12px;
-      box-shadow: 0 0 12px rgba(34,197,94,0.02), 0 0 18px rgba(59,130,246,0.06);
+      box-shadow: 0 0 12px rgba(255,150,40,0.15), 0 0 24px rgba(255,90,20,0.25);
       transition: box-shadow 0.25s ease; pointer-events: none;
     }
-    .glow-effect:hover::after { box-shadow: 0 0 20px rgba(34,197,94,0.03), 0 0 36px rgba(59,130,246,0.12); }
+    .glow-effect:hover::after { box-shadow: 0 0 24px rgba(255,150,40,0.3), 0 0 50px rgba(255,60,10,0.45); }
 
-    .gradient-text { background: linear-gradient(90deg, #00bfff, #0077cc); -webkit-background-clip: text; color: transparent; }
+    /* Gradient title text */
+    .gradient-text { background: linear-gradient(90deg, #ffdd77, #ff9933, #cc3300); -webkit-background-clip: text; color: transparent; }
 
+    /* Showcase / hero */
     .showcase-video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-    .showcase-overlay { position:absolute; inset:0; background:linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0) 100%); }
+    .showcase-overlay { position:absolute; inset:0; background:linear-gradient(to right, rgba(0,0,0,0.95) 0%, rgba(70,30,10,0.55) 50%, rgba(0,0,0,0) 100%); }
 
-    .season-btn.active { background:#0077cc !important; color:#fff !important; }
-    .filter-btn.active { background:#0077cc !important; color:#fff !important; }
+    /* Active buttons */
+    .season-btn.active { background:#d4a437 !important; color:#221108 !important; }
+    .filter-btn.active { background:#d4a437 !important; color:#221108 !important; }
 
     /* Modal & player */
     .modal-overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.9); z-index:1000; }
-    .modal-card { width:95%; max-width:1100px; background:linear-gradient(180deg, rgba(17,24,39,0.9), rgba(17,24,39,0.95)); border-radius:12px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.7); border:1px solid rgba(0,119,204,0.28); }
-    .modal-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:rgba(0,0,0,0.32); border-bottom:1px solid rgba(255,255,255,0.06); }
-    .modal-title { font-size:1.125rem; font-weight:600; color:#7dd3fc; }
+    .modal-card { width:95%; max-width:1100px; background:linear-gradient(180deg, rgba(40,22,10,0.92), rgba(25,12,6,0.97)); border-radius:12px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.7); border:1px solid rgba(212,164,55,0.35); }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:rgba(0,0,0,0.32); border-bottom:1px solid rgba(255,255,255,0.03); }
+    .modal-title { font-size:1.125rem; font-weight:600; color:#e9cd80; }
     .modal-close-btn { width:40px; height:40px; border-radius:999px; display:flex; align-items:center; justify-content:center; color:#fff; background:rgba(255,255,255,0.04); cursor:pointer; border:1px solid rgba(255,255,255,0.02); }
 
     .modal-player { position:relative; padding-bottom:56.25%; height:0; background:black; }
     .modal-player video, .modal-player iframe { position:absolute; inset:0; width:100%; height:100%; background:black; display:block; }
 
-    .spinner { width:36px; height:36px; border-radius:999px; border:4px solid rgba(255,255,255,0.06); border-top-color:#7dd3fc; animation:spin 1s linear infinite; display:none; }
+    /* Spinner */
+    .spinner { width:36px; height:36px; border-radius:999px; border:4px solid rgba(255,255,255,0.06); border-top-color:#e9cd80; animation:spin 1s linear infinite; display:none; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* advanced top-right control tray */
     .adv-tray {
       position:absolute; top:12px; right:12px; display:flex; gap:8px; align-items:center;
-      padding:8px 10px; border-radius:999px; background: rgba(8,12,20,0.45); backdrop-filter: blur(6px);
-      border: 1px solid rgba(59,130,246,0.18); box-shadow: 0 8px 30px rgba(59,130,246,0.06); z-index:22;
+      padding:8px 10px; border-radius:999px; background: rgba(20,10,5,0.55); backdrop-filter: blur(6px);
+      border: 1px solid rgba(212,164,55,0.3); box-shadow: 0 8px 30px rgba(212,164,55,0.18); z-index:22;
       opacity:0; transform: translateY(-6px); transition: opacity 220ms ease, transform 220ms ease;
     }
     .adv-tray.show { opacity:1; transform: translateY(0); }
-    .adv-btn { display:flex; align-items:center; gap:6px; color:#dbeafe; background:transparent; border:none; padding:6px 8px; border-radius:8px; cursor:pointer; }
-    .adv-select { background:transparent; color:#dbeafe; border:none; outline:none; padding:6px; }
+    .adv-btn { display:flex; align-items:center; gap:6px; color:#f6e7c5; background:transparent; border:none; padding:6px 8px; border-radius:8px; cursor:pointer; }
+    .adv-select { background:transparent; color:#f6e7c5; border:none; outline:none; padding:6px; }
     .adv-btn:hover { background: rgba(255,255,255,0.02); }
 
     @media (max-width:640px) {
       .adv-tray { top:8px; right:8px; padding:6px 8px; gap:6px; }
       .adv-select { font-size:13px; }
     }
+
+    /* Movie cards */
+    .movie-card { background: #2b1a11; }
+    .movie-card:hover { background: #3b2216; }
+
+    footer { border-top: 1px solid #3c2614; }
+
+    /* spark canvas fix */
+    #sparkCanvasPage{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10000;}
   </style>
 </head>
 <body class="bg-black text-gray-100 min-h-screen">
