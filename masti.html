@@ -199,12 +199,18 @@ if (url.includes("mxdrop.to/e/")) {
       src="${url}?autoplay=1"
       width="100%"
       height="100%"
-      allow="autoplay; fullscreen"
-      frameborder="0">
-    </iframe>`;
+      frameborder="0"
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowfullscreen
+      webkitallowfullscreen
+      mozallowfullscreen
+      referrerpolicy="no-referrer">
+    </iframe>
+  `;
   showModal();
   return;
 }
+
 
 
 
