@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Silicon Valley</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.1/dist/hls.min.js"></script>
+
+  <style>
+    body { background: #0b0f14; color: #e6eef6; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+    header, footer { background: #071122; }
+    .season-btn.active { background:#ffd166 !important; color:#081017 !important; }
+    .movie-card { background: #071627; border:1px solid rgba(255,255,255,0.03); }
+    .modal-overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); z-index:1000; }
+    .modal-card { width:95%; max-width:1100px; border-radius:10px; overflow:hidden; }
+    .modal-player { position:relative; padding-bottom:56.25%; height:0; background:black; }
+    .modal-player video, .modal-player iframe { position:absolute; inset:0; width:100%; height:100%; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<header class="sticky top-0 z-50 bg-black/60 backdrop-blur-md border-b border-slate-700/20">
+  <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-3">
+      <div class="w-12 h-12 bg-gradient-to-br from-sky-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+        <i class="fas fa-microchip text-white text-2xl"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold">Silicon Valley</h1>
+        <div class="text-xs text-slate-300">TV Series • Seasons 1–6</div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div class="hidden md:block">
+        <input id="search-input" type="search" placeholder="Search episodes or titles..." class="rounded-full px-3 py-2 bg-slate-900 text-slate-100 border border-slate-800" />
+      </div>
+      <button id="open-search-mobile" class="md:hidden p-2 rounded-full bg-slate-800"><i class="fas fa-search text-white"></i></button>
+    </div>
+  </div>
+</header>
+
+<main class="container mx-auto px-4 py-8">
+  <section class="mb-6">
+    <div class="rounded-lg overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 p-6">
+      <h2 class="text-xl font-semibold">Silicon Valley — A comedy about a startup</h2>
+      <p class="text-slate-300 mt-2">A group of software developers build a startup in Silicon Valley and navigate the tech world, investors, and ridiculous competition.</p>
+    </div>
+  </section>
+
+  <section class="mb-6">
+    <div class="flex gap-2 overflow-x-auto pb-2">
+      <button class="season-btn active px-4 py-2 rounded-full" data-season="all">All Episodes</button>
+      <button class="season-btn px-4 py-2 rounded-full" data-season="1">Season 1</button>
+      <button class="season-btn px-4 py-2 rounded-full" data-season="2">Season 2</button>
+      <button class="season-btn px-4 py-2 rounded-full" data-season="3">Season 3</button>
+      <button class="season-btn px-4 py-2 rounded-full" data-season="4">Season 4</button>
+      <button class="season-btn px-4 py-2 rounded-full" data-season="5">Season 5</button>
+      <button class="season-btn px-4 py-2 rounded-full" data-season="6">Season 6</button>
+    </div>
+  </section>
+
+  <section>
+    <h3 class="text-lg font-medium mb-4">Episodes</h3>
+    <div id="movies" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+  </section>
+</main>
+
+<footer class="py-6 text-center text-slate-400">© Silicon Valley</footer>
+
+<!-- Modal -->
+<div id="video-modal" class="modal-overlay hidden" aria-hidden="true">
+  <div class="modal-card bg-black">
+    <div class="flex justify-between items-center p-3 border-b border-slate-800">
+      <div id="modal-title" class="text-white font-semibold"></div>
+      <button id="close-video-modal" class="p-2 rounded-full bg-slate-800 text-white"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-player">
+      <video id="modal-video" controls playsinline preload="metadata"></video>
+    </div>
+  </div>
+</div>
+
+<script>
+// Episodes data: Silicon Valley seasons 1-6 (placeholders for video URLs)
+const movies = [
+  // Season 1 (8 eps)
+  { title: 'S1E01 - Minimum Viable Product', video:'https://sri.solvonaacademy.sbs:443/v4/is9/8kayk/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/mN6kf5QqiBaFwB1RrjxnLnnyR8g.jpg', season:1 },
+  { title: 'S1E02 - The Cap Table', video:'https://sri.celestiorstudio.cyou:443/v4/epu/fpgc6/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/pToo70MPuY9o7Wyi3S0gIveaIHO.jpg', season:1 },
+  { title: 'S1E03 - Articles of Incorporation', video:'https://sri.mistralstudio.shop:443/v4/hld/pxdei/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/ymM7tW5eMPMU2c2DQDb6nLu5V5d.jpg', season:1 },
+  { title: 'S1E04 - Fiduciary Duties', video:'https://svz.fiorellagarden.sbs:443/v4/tab/pxdel/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/y5Pnxm432n3ysYG6KomnyvBEyiR.jpg', season:1 },
+  { title: 'S1E05 - Signaling Risk', video:'https://sri.fiorellagarden.sbs:443/v4/mik/n3b88/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/4PHnrI1ClfFNYjFkRiyJozssurL.jpg', season:1 },
+  { title: 'S1E06 - Third Party Insourcing', video:'https://sad.aesthorium.sbs:443/v4/is9/lsprm/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/n2hm1gEsiDKqRrzgwMxuSJFubT8.jpg', season:1 },
+  { title: 'S1E07 - Proof of Concept', video:'https://sy6.eleviora.space:443/v4/tab/fpgzd/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/tgETSBSx8bwk92lp9nJMJ2IQj8R.jpg', season:1 },
+  { title: 'S1E08 - Optimal Tip-To-Tip Efficiency', video:'https://sri.zenithraevents.store:443/v4/is9/orzm8/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/2363zDpHm0gMbEhNk3q0hYXRGQH.jpg', season:1 },
+
+  // Season 2 (10 eps)
+  { title: 'S2E01 - Sand Hill Shuffle', video:'https://sy6.solvonaacademy.sbs:443/v4/mik/vntgv/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/kudY5SSLMDorfYHS1aS1Qj3Pp4H.jpg', season:2 },
+  { title: 'S2E02 - Runaway Devaluation', video:'https://sri.solvonaacademy.sbs:443/v4/mik/yt8df/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/ur0UstXr684QEByv415kzEuuW42.jpg', season:2 },
+  { title: 'S2E03 - Bad Money', video:'https://sy6.trovianaworks.online:443/v4/mik/aqm8j/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/fLub6BDHdnvrEIeezHygZEZq4Qu.jpg', season:2 },
+  { title: 'S2E04 - The Lady', video:'https://sri.marshlandcreativeworks.sbs:443/v4/mik/rcliy/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/w3UiscCdEGO9gphijXi4qm0XbJA.jpg', season:2 },
+  { title: 'S2E05 - Server Space', video:'https://sad.solvonaacademy.sbs:443/v4/is9/61n5s/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/3aFDxHCFNinkzdCGnHHZBnVZZB0.jpg', season:2 },
+  { title: 'S2E06 - Homicide', video:'https://sui.glintoriahealth.sbs:443/v4/is9/3mi1l/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/cxkCLVq93TTAfeTMYlEe0SmSPEZ.jpg', season:2 },
+  { title: 'S2E07 - Adult Content', video:'https://svz.glowfield.space:443/v4/is9/aqmbf/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/ew3FPoR5TfuMeViHbTnHgaI45zB.jpg', season:2 },
+  { title: 'S2E08 - White Hat/Black Hat', video:'https://sui.brightcrestshop.shop:443/v4/hld/jucmh/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/qk6A8NX0eTJM3NWKSki2sIRfgWz.jpg', season:2 },
+  { title: 'S2E09 - Binding Arbitration', video:'https://sad.harmonivia.cyou:443/v4/9a/koq91/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/eVzx30G4TvkV6AMhsyAalSU2kuG.jpg', season:2 },
+  { title: 'S2E10 - Two Days of the Condor', video:'https://sui.mindspirebranding.sbs:443/v4/tab/ugehy/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/htnawGNust6Z0s492Y1FhQr9XIS.jpg', season:2 },
+
+  // Season 3 (10 eps)
+  { title: 'S3E01 - Founder Friendly', video:'https://sy6.glacialstudio.shop:443/v4/tab/dvypi/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/aTnRUqJ3gyeIKwHezaW9oB2X1YQ.jpg', season:3 },
+  { title: 'S3E02 - Two in the Box', video:'https://svz.ambercrestdigital.online:443/v4/is9/qzhkc/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/A3H1QgiPco47iHgv4DF7piMpXUY.jpg', season:3 },
+  { title: 'S3E03 - Meinertzhagen\'s Haversack', video:'https://svz.florencelab.space:443/v4/epu/qzhkd/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/p6dSX0xbk6Mmz4WsoblTPUXjpZJ.jpg', season:3 },
+  { title: 'S3E04 - Maleant Data Systems Solutions', video:'https://svz.zenithraevents.store:443/v4/tab/ugeh9/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/9fGLYI4OvcBUbrXiXh4gSTaL8O6.jpg', season:3 },
+  { title: 'S3E05 - The Empty Chair', video:'https://sy6.solvonaacademy.sbs:443/v4/mik/hfuqn/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/gVVli47E3zUtZVrHuxq9GAloi0M.jpg', season:3 },
+  { title: 'S3E06 - Bachmanity Insanity', video:'https://sad.velonovaenergy.sbs:443/v4/9a/ew5ui/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/bpWIRPbEdNj09q4ZD1RoQA3NKsx.jpg', season:3 },
+  { title: 'S3E07 - To Build a Better Beta', video:'https://s5r.greenhavenstore.store:443/v4/mik/tbkv6/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/bpWIRPbEdNj09q4ZD1RoQA3NKsx.jpg', season:3 },
+  { title: 'S3E08 - Bachman\'s Earnings Over-Ride', video:'https://sri.mistralstudio.shop:443/v4/mik/ugeln/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/b9USgA2Nh9QMoCCpFQ6QdlJXyoW.jpg', season:3 },
+  { title: 'S3E09 - Daily Active Users', video:'https://svz.bluefusion.sbs:443/v4/tab/n3b66/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/2r4tqHf2jxciVBduvj3eZANamMJ.jpg', season:3 },
+  { title: 'S3E10 - The Uptick', video:'https://sy6.cometri.store:443/v4/mik/s5xcp/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/2b8Xs9Fqt6H608pWLaBoBlrEqSk.jpg', season:3 },
+
+  // Season 4 (10 eps)
+  { title: 'S4E01 - Success Failure', video:'https://sad.oravix.cyou:443/v4/9a/596e8/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/vnV8nRsMvWDbWot4m4XKTEQKZXu.jpg', season:4 },
+  { title: 'S4E02 - Terms of Service', video:'https://sui.florenda.online:443/v4/is9/3mi1f/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/fxNqng24prlsIw6SgBWU7XxCcxn.jpg', season:4 },
+  { title: 'S4E03 - Intellectual Property', video:'https://svz.astroliteonline.online:443/v4/tab/1a396/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/iIznsbDIUTXozlQDmJkhcVI9RLB.jpg', season:4 },
+  { title: 'S4E04 - Teambuilding Exercise', video:'https://sui.velonovaenergy.sbs:443/v4/tab/orzb6/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/ixnSijOwzaGojKkKHoGNcG1vDBN.jpg', season:4 },
+  { title: 'S4E05 - The Blood Boy', video:'https://sui.claravonartisan.sbs:443/v4/9a/pxdlk/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/fobLepYRsj4lZRbVu5llTtiH219.jpg', season:4 },
+  { title: 'S4E06 - Customer Service', video:'https://sri.bluefusion.sbs:443/v4/pk8/wy9gf/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/zmAq6z6S07Ck6PWYnqOL8yhWcCI.jpg', season:4 },
+  { title: 'S4E07 - The Patent Troll', video:'https://sui.celestiorstudio.cyou:443/v4/tab/aqm8b/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/eU979h2f56ALEXkkwbyvJbsLc3k.jpg', season:4 },
+  { title: 'S4E08 - The Keenan Vortex', video:'https://sad.nordivisnetwork.store:443/v4/is9/pxdlh/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/6nTiPx7mQ3nWGzvnmKXUPsasip2.jpg', season:4 },
+  { title: 'S4E09 - Hooli-Con', video:'https://sui.seawindart.space:443/v4/epu/lspuz/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/nwYmGaHCZt3gR8Knqq4ybOuqhod.jpg', season:4 },
+  { title: 'S4E10 - Server Error', video:'https://sri.bluefusion.sbs:443/v4/pk8/yt8d8/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/su047brLng4dut8OJzJ3stm4MaT.jpg', season:4 },
+
+  // Season 5 (8 eps)
+  { title: 'S5E01 - Grow Fast or Die Slow', video:'https://sad.arkadine.shop:443/v4/mik/61npf/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/AuvXrmxTKkUwaD1vFf5GIqg3ml4.jpg', season:5 },
+  { title: 'S5E02 - Reorientation', video:'https://sri.clarionedge.sbs:443/v4/tab/tbkwd/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/4C1hRnNywuomoq3vIPxhoBoHi4h.jpg', season:5 },
+  { title: 'S5E03 - Chief Operating Officer', video:'https://sri.fortimax.shop:443/v4/pk8/8ka51/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/y26dltlXtekRmgC7HVz35k4mvZ5.jpg', season:5 },
+  { title: 'S5E04 - Tech Evangelist', video:'https://sui.velonovaenergy.sbs:443/v4/is9/s5xzu/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/51iKg43dYQ319Ou9KylmJfoWiwc.jpg', season:5 },
+  { title: 'S5E05 - Facial Recognition', video:'https://sri.glacialstudio.shop:443/v4/is9/ugeix/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/toLeTR3RZFnkkYB9OjbSO4DPfYv.jpg', season:5 },
+  { title: 'S5E06 - Artificial Emotional Intelligence', video:'https://sy6.cometri.store:443/v4/tab/ijrt1/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/eBJnfyvkDZZ55iA83AAxSaG1XKp.jpg', season:5 },
+  { title: 'S5E07 - Initial Coin Offering', video:'https://svz.trovianaworks.online:443/v4/hld/qzh1z/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/eBJnfyvkDZZ55iA83AAxSaG1XKp.jpg', season:5 },
+  { title: 'S5E08 - Fifty-One Percent', video:'https://sy6.florencelab.space:443/v4/9a/wy9cj/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/l7OjS51U4b04wLpHFfoGZHJEXAn.jpg', season:5 },
+
+  // Season 6 (7 eps)
+  { title: 'S6E01 - Artificial Lack of Intelligence', video:'https://sy6.oravix.cyou:443/v4/tab/dvyuk/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/8mdQzX9gzOFVMrLq7GQ2vEoBCvC.jpg', season:6 },
+  { title: 'S6E02 - Blood Money', video:'https://sui.lakeshorecreativeworks.space:443/v4/mik/ijr3k/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/9W8ySMQgeShEmaw7O3SzxDMiLs6.jpg', season:6 },
+  { title: 'S6E03 - Hooli Smokes!', video:'https://sui.auroriacollective.cyou:443/v4/9a/rclhn/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/jfxdeY9d6GHUcvfYlY5t0dARPrI.jpg', season:6 },
+  { title: 'S6E04 - Maximizing Alphaness', video:'https://sri.bellevianetwork.sbs:443/v4/tab/koqtk/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/m0IW2bmsnkRkICLTE87OLlhzPZO.jpg', season:6 },
+  { title: 'S6E05 - Tethics', video:'https://sui.trovianaworks.online:443/v4/is9/vnt9k/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/8MqmJIeScyPV3vywFV5lWs36TQo.jpg', season:6 },
+  { title: 'S6E06 - RussFest', video:'https://sri.mirevana.online:443/v4/is9/bionq/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/rTdEMahbMXOgQJc7yWlmEu58UZ6.jpg', season:6 },
+  { title: 'S6E07 - Exit Event', video:'https://sri.clarvista.shop:443/v4/is9/yt86s/index-f2-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/nVD7ePa3EYJOiqIgA84O6kfTMA.jpg', season:6 }
+];
+
+
+const container = document.getElementById('movies');
+const videoModal = document.getElementById('video-modal');
+const modalTitle = document.getElementById('modal-title');
+let currentHls = null;
+
+function showModal(){ videoModal.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function hideModal(){ videoModal.classList.add('hidden'); document.body.style.overflow=''; }
+
+function isHls(u){return u && (u.includes('.m3u8')||u.includes('index-')||/index.*\.txt/i.test(u));}
+function isMP4(u){return /\.mp4($|\?)/i.test(u);} 
+function isYouTube(u){return u && (u.includes('youtu')||u.includes('youtube.com'));}
+
+function playInModal(title, url){
+  if(currentHls){try{currentHls.destroy();}catch(e){}currentHls=null;}
+  const playerContainer = document.querySelector('.modal-player');
+  const modalVideo = document.getElementById('modal-video');
+  modalTitle.textContent = title||'';
+
+  // streamtape iframe
+  if(url && url.includes('streamtape.com')){
+    playerContainer.innerHTML = `<iframe src="${url}" width="100%" height="100%" allowfullscreen frameborder="0"></iframe>`;
+    showModal(); return;
+  }
+
+  if(isYouTube(url)){
+    playerContainer.innerHTML = `<iframe src="${url}?autoplay=1&rel=0" width="100%" height="100%" allowfullscreen frameborder="0"></iframe>`;
+    showModal(); return;
+  }
+
+  // HLS
+  if(isHls(url)){
+    if(window.Hls && Hls.isSupported()){
+      currentHls = new Hls();
+      currentHls.loadSource(url);
+      currentHls.attachMedia(modalVideo);
+      currentHls.on(Hls.Events.MANIFEST_PARSED, ()=>{ showModal(); modalVideo.play().catch(()=>{}); });
+    } else {
+      modalVideo.src = url; showModal(); modalVideo.play().catch(()=>{});
+    }
+    return;
+  }
+
+  if(isMP4(url)){
+    modalVideo.src = url; showModal(); modalVideo.play().catch(()=>{}); return;
+  }
+
+  // fallback: redirect to player page
+  window.location.href = `player.html?title=${encodeURIComponent(title)}&video=${encodeURIComponent(url)}`;
+}
+
+function closePlayer(){
+  if(currentHls){try{currentHls.destroy();}catch(e){}currentHls=null;}
+  const playerContainer = document.querySelector('.modal-player');
+  playerContainer.innerHTML = `<video id="modal-video" controls playsinline preload="metadata"></video>`;
+  hideModal();
+}
+
+document.getElementById('close-video-modal').addEventListener('click', closePlayer);
+videoModal.addEventListener('click', e=>{ if(e.target===videoModal) closePlayer(); });
+
+function renderMovies(list){
+  container.innerHTML = '';
+  list.forEach(m=>{
+    const div = document.createElement('div');
+    div.className = 'movie-card rounded-lg overflow-hidden cursor-pointer';
+    div.innerHTML = `
+      <div class="relative">
+        <img src="${m.image}" alt="${m.title}" class="w-full h-60 object-cover">
+        <div class="absolute inset-0 flex items-end p-3 bg-gradient-to-t from-black/60">
+          <button class="bg-yellow-400 text-black px-3 py-1 rounded">Play</button>
+        </div>
+      </div>
+      <div class="p-3">
+        <div class="font-semibold">${m.title}</div>
+        <div class="text-sm text-slate-400">Season ${m.season}</div>
+      </div>`;
+    div.addEventListener('click', ()=> playInModal(m.title, m.video));
+    container.appendChild(div);
+  });
+}
+
+// initial render
+renderMovies(movies);
+
+// season filter
+const seasonBtns = document.querySelectorAll('.season-btn');
+seasonBtns.forEach(btn => btn.addEventListener('click', ()=>{
+  seasonBtns.forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const season = btn.dataset.season;
+  const filtered = season === 'all' ? movies : movies.filter(m => String(m.season) === String(season));
+  renderMovies(filtered);
+}));
+
+// search
+const searchInput = document.getElementById('search-input');
+searchInput && searchInput.addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  const activeSeasonBtn = document.querySelector('.season-btn.active');
+  const season = activeSeasonBtn ? activeSeasonBtn.dataset.season : 'all';
+  let list = season === 'all' ? movies : movies.filter(m=>String(m.season)===String(season));
+  if(q){ list = list.filter(m => m.title.toLowerCase().includes(q)); }
+  renderMovies(list);
+});
+
+</script>
+</body>
+</html>
