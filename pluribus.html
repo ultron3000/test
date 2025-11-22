@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pluribus</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.1/dist/hls.min.js"></script>
+
+  <style>
+    body { background:#0b0f14; color:#e6eef6; font-family:Inter, system-ui; }
+    header, footer { background:#071122; }
+    .season-btn.active { background:#ffd166 !important; color:#081017 !important; }
+    .movie-card { background:#071627; border:1px solid rgba(255,255,255,0.03); }
+    .modal-overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); z-index:1000; }
+    .modal-card { width:95%; max-width:1100px; border-radius:10px; overflow:hidden; }
+    .modal-player { position:relative; padding-bottom:56.25%; height:0; background:black; }
+    .modal-player video, .modal-player iframe { position:absolute; inset:0; width:100%; height:100%; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<header class="sticky top-0 z-50 bg-black/60 backdrop-blur-md border-b border-slate-700/20">
+  <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-3">
+      <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-700 rounded-full flex items-center justify-center shadow-lg">
+        <i class="fas fa-mask text-white text-2xl"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold">Pluribus</h1>
+        <div class="text-xs text-slate-300">TV Series • Seasons 1–2</div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div class="hidden md:block">
+        <input id="search-input" type="search" placeholder="Search episodes or titles..." class="rounded-full px-3 py-2 bg-slate-900 text-slate-100 border border-slate-800" />
+      </div>
+      <button id="open-search-mobile" class="md:hidden p-2 rounded-full bg-slate-800"><i class="fas fa-search text-white"></i></button>
+    </div>
+  </div>
+</header>
+
+<main class="container mx-auto px-4 py-8">
+
+  <section class="mb-6">
+    <div class="rounded-lg overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 p-6">
+      <h2 class="text-xl font-semibold">Pluribus — A Dark Mystery Thriller</h2>
+      <p class="text-slate-300 mt-2">In a world overtaken by a mysterious wave of forced happiness, Carol Sturka, the only person immune, must uncover what's really going on - and save humanity from its own bliss.</p>
+    </div>
+  </section>
+
+  <section class="mb-6">
+    <div class="flex gap-2 overflow-x-auto pb-2">
+      <button class="season-btn active px-4 py-2 rounded-full" data-season="all">All Episodes</button>
+      <button class="season-btn px-4 py-2 rounded-full" data-season="1">Season 1</button>
+      <button class="season-btn px-4 py-2 rounded-full" data-season="2">Season 2</button>
+    </div>
+  </section>
+
+  <section>
+    <h3 class="text-lg font-medium mb-4">Episodes</h3>
+    <div id="movies" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+  </section>
+</main>
+
+<footer class="py-6 text-center text-slate-400">© Pluribus</footer>
+
+<!-- Modal -->
+<div id="video-modal" class="modal-overlay hidden" aria-hidden="true">
+  <div class="modal-card bg-black">
+    <div class="flex justify-between items-center p-3 border-b border-slate-800">
+      <div id="modal-title" class="text-white font-semibold"></div>
+      <button id="close-video-modal" class="p-2 rounded-full bg-slate-800 text-white"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-player">
+      <video id="modal-video" controls playsinline preload="metadata"></video>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------------------------------------------------------------------
+//  PLURIBUS EPISODES (Season 1 & 2) — Dummy URLs (replace anytime)
+// ---------------------------------------------------------------------
+const movies = [
+  // ---------------------- SEASON 1 ----------------------
+  { title:'S1E01 - We Is Us', video:'https://soq.meadowstoneproduction.shop:443/v4/hl1/bctoec/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/5abqAAPKjFDqmNwLb0sCtGlS8aj.jpg', season:1 },
+  { title:'S1E02 - Pirate Lady', video:'https://s39.harborwoodwellnesslab.sbs:443/v4/5w3/yow8qp/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/lHgKNb0orBWqk4XHkYMS62VwY2p.jpg', season:1 },
+  { title:'S1E03 - Grenade', video:'https://soq.bellevianetwork.sbs:443/v4/jcp/s18htp/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/b2PaM8KcHLS2TIwQOyTSyiIn9FF.jpg', season:1 },
+  { title:'S1E04 - Please, Carol', video:'https://soq.goldenmeadowlearning.sbs:443/v4/hl1/l6tv1v/index-f1-v1-a1.txt', image:'https://image.tmdb.org/t/p/w300/7HyFmXC7ydtA4aKzlimCPGLcdxJ.jpg', season:1 },
+  { title:'S1E05 - Got Milk', video:'https://example.com/pluribus-s1e5.mp4', image:'https://image.tmdb.org/t/p/w300/7dQXHMP7irZNis7erI8mHL3p8Ve.jpg', season:1 },
+  { title:'S1E06 - TBA', video:'https://example.com/pluribus-s1e6.m3u8', image:'https://placehold.co/300x450?text=Pluribus+S1E6', season:1 },
+  { title:'S1E07 - TBA', video:'https://example.com/pluribus-s1e6.m3u8', image:'https://placehold.co/300x450?text=Pluribus+S1E6', season:1 },
+  { title:'S1E08 - TBA', video:'https://example.com/pluribus-s1e6.m3u8', image:'https://placehold.co/300x450?text=Pluribus+S1E6', season:1 },
+  { title:'S1E09 - TBA', video:'https://example.com/pluribus-s1e6.m3u8', image:'https://placehold.co/300x450?text=Pluribus+S1E6', season:1 },
+
+  // ---------------------- SEASON 2 ----------------------
+  { title:'S2E01 - Aftermath', video:'https://example.com/pluribus-s2e1.m3u8', image:'https://placehold.co/300x450?text=Pluribus+S2E1', season:2 },
+  { title:'S2E02 - The Shift', video:'https://example.com/pluribus-s2e2.mp4', image:'https://placehold.co/300x450?text=Pluribus+S2E2', season:2 },
+  { title:'S2E03 - New Threats', video:'https://example.com/pluribus-s2e3.m3u8', image:'https://placehold.co/300x450?text=Pluribus+S2E3', season:2 },
+  { title:'S2E04 - Web of Lies', video:'https://example.com/pluribus-s2e4.m3u8', image:'https://placehold.co/300x450?text=Pluribus+S2E4', season:2 },
+  { title:'S2E05 - Revelation', video:'https://example.com/pluribus-s2e5.m3u8', image:'https://placehold.co/300x450?text=Pluribus+S2E5', season:2 },
+  { title:'S2E06 - The Final Move', video:'https://example.com/pluribus-s2e6.m3u8', image:'https://placehold.co/300x450?text=Pluribus+S2E6', season:2 },
+];
+
+// ---------------------------------------------------------------------
+//  ORIGINAL PLAYER LOGIC — UNTOUCHED
+// ---------------------------------------------------------------------
+const container = document.getElementById('movies');
+const videoModal = document.getElementById('video-modal');
+const modalTitle = document.getElementById('modal-title');
+let currentHls = null;
+
+function showModal(){ videoModal.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function hideModal(){ videoModal.classList.add('hidden'); document.body.style.overflow=''; }
+
+function isHls(u){return u && (u.includes('.m3u8')||u.includes('index-')||/index.*\.txt/i.test(u));}
+function isMP4(u){return /\.mp4($|\?)/i.test(u);}
+function isYouTube(u){return u && (u.includes('youtu')||u.includes('youtube.com'));}
+
+function playInModal(title, url){
+  if(currentHls){try{currentHls.destroy();}catch(e){} currentHls=null;}
+  const playerContainer=document.querySelector('.modal-player');
+  const modalVideo=document.getElementById('modal-video');
+  modalTitle.textContent = title || '';
+
+  if(url.includes('streamtape.com')){
+    playerContainer.innerHTML=`<iframe src="${url}" allowfullscreen frameborder="0"></iframe>`;
+    showModal(); return;
+  }
+
+  if(isYouTube(url)){
+    playerContainer.innerHTML=`<iframe src="${url}?autoplay=1&rel=0" allowfullscreen frameborder="0"></iframe>`;
+    showModal(); return;
+  }
+
+  if(isHls(url)){
+    if(window.Hls && Hls.isSupported()){
+      currentHls = new Hls();
+      currentHls.loadSource(url);
+      currentHls.attachMedia(modalVideo);
+      currentHls.on(Hls.Events.MANIFEST_PARSED,()=>{ showModal(); modalVideo.play().catch(()=>{}); });
+    } else {
+      modalVideo.src=url; showModal(); modalVideo.play().catch(()=>{});
+    }
+    return;
+  }
+
+  if(isMP4(url)){
+    modalVideo.src=url; showModal(); modalVideo.play().catch(()=>{}); return;
+  }
+
+  window.location.href = `player.html?title=${encodeURIComponent(title)}&video=${encodeURIComponent(url)}`;
+}
+
+function closePlayer(){
+  if(currentHls){try{currentHls.destroy();}catch(e){} currentHls=null;}
+  document.querySelector('.modal-player').innerHTML=`<video id="modal-video" controls playsinline preload="metadata"></video>`;
+  hideModal();
+}
+
+document.getElementById('close-video-modal').addEventListener('click', closePlayer);
+videoModal.addEventListener('click', e=>{ if(e.target===videoModal) closePlayer(); });
+
+function renderMovies(list){
+  container.innerHTML = '';
+  list.forEach(m=>{
+    const div=document.createElement('div');
+    div.className='movie-card rounded-lg overflow-hidden cursor-pointer';
+    div.innerHTML=`
+      <div class="relative">
+        <img src="${m.image}" class="w-full h-60 object-cover">
+        <div class="absolute inset-0 flex items-end p-3 bg-gradient-to-t from-black/60">
+          <button class="bg-yellow-400 text-black px-3 py-1 rounded">Play</button>
+        </div>
+      </div>
+      <div class="p-3">
+        <div class="font-semibold">${m.title}</div>
+        <div class="text-sm text-slate-400">Season ${m.season}</div>
+      </div>`;
+    div.addEventListener('click',()=>playInModal(m.title,m.video));
+    container.appendChild(div);
+  });
+}
+
+renderMovies(movies);
+
+document.querySelectorAll('.season-btn').forEach(btn =>
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.season-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const s = btn.dataset.season;
+    renderMovies(s==='all' ? movies : movies.filter(m=>String(m.season)===String(s)));
+  })
+);
+
+const searchInput=document.getElementById('search-input');
+searchInput && searchInput.addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  const season=document.querySelector('.season-btn.active').dataset.season;
+  let list=season==='all'?movies:movies.filter(m=>String(m.season)===String(season));
+  if(q) list=list.filter(m=>m.title.toLowerCase().includes(q));
+  renderMovies(list);
+});
+</script>
+
+</body>
+</html>
