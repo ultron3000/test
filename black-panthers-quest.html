@@ -21,6 +21,14 @@
     .accent-text{background:linear-gradient(90deg,var(--avengers-blue),#2a9df4);-webkit-background-clip:text;background-clip:text;color:transparent;}
     .episode-card{transition:.3s;}
     .episode-card:hover{transform:translateY(-5px);}
+    /* modal-player styling */
+    .modal-overlay { position: fixed; inset: 0; z-index: 50; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.9); padding: 1rem; }
+    .modal-card { width: 100%; max-width: 64rem; background: #111827; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid rgba(255,204,0,0.06); }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.03); background: rgba(0,0,0,0.25); }
+    .modal-title { font-size: 1.125rem; font-weight:700; color:var(--avengers-gold); }
+    .modal-close-btn { width:40px; height:40px; border-radius:999px; background:transparent; border:1px solid rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; }
+    .modal-player { position: relative; padding-bottom: 56.25%; height: 0; background: black; }
+    .modal-player video, .modal-player iframe { position:absolute; top:0; left:0; width:100%; height:100%; background:black; }
   </style>
 </head>
 
@@ -69,29 +77,33 @@
   </section>
 </main>
 
-<!-- Video Modal -->
-<div id="video-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 p-4">
-  <div class="relative w-full max-w-4xl bg-gray-900 rounded-xl overflow-hidden shadow-2xl">
-    <button id="close-video-modal" class="absolute top-4 right-4 bg-black/70 text-white w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-times text-xl"></i></button>
-    <video id="modal-video" class="w-full" controls playsinline></video>
-    <h3 id="video-title" class="text-xl font-bold p-4 gradient-text text-center"></h3>
+<!-- Video Modal (updated to Tukaram-style modal-player) -->
+<div id="video-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div id="modal-title" class="modal-title"></div>
+      <button id="close-video-modal" class="modal-close-btn" aria-label="Close video"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-player" id="modal-player">
+      <!-- dynamic: video element or iframe will be inserted here -->
+      <video id="modal-video" class="w-full h-full" controls playsinline></video>
+    </div>
   </div>
 </div>
 
 <script>
 /* ===== EPISODES DATA (REPLACED) =====
-   Note: 'video' fields are sample MP4 placeholders so clicking plays a video right away.
-   Replace each ep.video value with your actual episode URL (mp4 or .m3u8).
+   Note: 'video' fields are sample MP4/placeholders. Replace with your actual episode URL (mp4, .m3u8, embed links etc.).
 */
 const episodes = [
   { title: "Episode 01: Rising Shadows", video: "https://scvo.zenithstrategylabs.online/v4/xq/gmez5/index-f1-v1-a1.txt", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5132/1145132-h-52bd1eb1ccdd", description: "T'Challa faces a new threat that tests his leadership and the Avengers' trust.", duration: "22 min", rating: 4.8, releaseDate: "2025-01-01" },
-  { title: "Episode 02: Wakandan Threads", video: "https://s5r.silvercliffcreativehub.space:443/v4/epu/fvkjio/index-f2-v1-a1.txt", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5134/1145134-h-664f0c5e1652", description: "A political conspiracy in Wakanda forces secret alliances.", duration: "22 min", rating: 4.7, releaseDate: "2025-01-08" },
+  { title: "Episode 02: Wakandan Threads", video: "https://sr81.pavonilaboratories.cyou/v4/sc/jnckz/cf-master.txt?v=1739617094", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5134/1145134-h-664f0c5e1652", description: "A political conspiracy in Wakanda forces secret alliances.", duration: "22 min", rating: 4.7, releaseDate: "2025-01-08" },
   { title: "Episode 03: Echoes of Midnight", video: "https://scvo.crystalhavenresearch.shop/v4/js/5twjp/index-f1-v1-a1.txt", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5136/1145136-h-d0d55ef1dbd5", description: "Black Panther and the team hunt a shadowy organization with ties to Vibranium.", duration: "22 min", rating: 4.7, releaseDate: "2025-01-15" },
   { title: "Episode 04: Broken Vows", video: "https://scvo.terraforgeinnovations.space/v4/db/pskgh/index-f1-v1-a1.txt", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5138/1145138-h-8955deb46c98", description: "An old ally's betrayal puts T'Challa in a moral dilemma.", duration: "22 min", rating: 4.6, releaseDate: "2025-01-22" },
   { title: "Episode 05: The Sound of War", video: "https://sr81.crystalhavenresearch.shop/v4/ic/lpuiq/index-f1-v1-a1.txt", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5140/1145140-h-6a96f84ec910", description: "Battlefronts expand as global powers scramble for Wakanda's protection.", duration: "22 min", rating: 4.8, releaseDate: "2025-01-29" },
   { title: "Episode 06: Labyrinth of Kings", video: "https://skra.zenlith.space/v4/61/xb6z8/index-f1-v1-a1.txt", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5142/1145142-h-0cb730d3bf11", description: "A cryptic relic draws T'Challa into a deadly maze beneath Wakanda.", duration: "22 min", rating: 4.6, releaseDate: "2025-02-05" },
-  { title: "Episode 07: Cloak and Dagger", video: "https://shh.sunvalleydigitalworks.cfd:443/v4/xq/qpy3ak/index-f2-v1-a1.txt", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5143/1145143-h-b47527df6047", description: "Stealth missions push the Avengers to their limits behind enemy lines.", duration: "22 min", rating: 4.5, releaseDate: "2025-02-12" },
-  { title: "Episode 08: Wakanda Under Siege", video: "https://spc.ascentivehub.shop:443/v4/epu/dbzegy/index-f2-v1-a1.txt", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5144/1145144-h-ae25f7d30698", description: "A coordinated strike threatens the heart of Wakanda.", duration: "22 min", rating: 4.9, releaseDate: "2025-02-19" },
+  { title: "Episode 07: Cloak and Dagger", video: "https://sdqm.mountainpeakstudio.space/v4/ic/i6sby/cf-master.txt?v=1739617674", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5143/1145143-h-b47527df6047", description: "Stealth missions push the Avengers to their limits behind enemy lines.", duration: "22 min", rating: 4.5, releaseDate: "2025-02-12" },
+  { title: "Episode 08: Wakanda Under Siege", video: "https://sojg.harmonynetworks.space/v4/k5/psk6s/cf-master.txt?v=1739617715", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5144/1145144-h-ae25f7d30698", description: "A coordinated strike threatens the heart of Wakanda.", duration: "22 min", rating: 4.9, releaseDate: "2025-02-19" },
   { title: "Episode 09: The Lost Protocol", video: "https://spuc.lucernaarchitecture.space/v4/m9/lpue8/index-f1-v1-a1.txt", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5145/1145145-h-987ac0c471b1", description: "An old protocol resurfaces that could change the balance of power.", duration: "22 min", rating: 4.6, releaseDate: "2025-02-26" },
   { title: "Episode 10: Broken Crown", video: "https://sj3l.zenlithsustainables.cyou/v4/m9/8qtrp/index-f1-v1-a1.txt", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5146/1145146-h-49d8346da48e", description: "T'Challa must reconcile throne duties with the needs of his friends.", duration: "22 min", rating: 4.7, releaseDate: "2025-03-05" },
   { title: "Episode 11: Web of Lies", video: "https://scvo.lumintrixeducation.sbs/v4/k5/mxifx/cf-master.txt?v=1739617972", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5147/1145147-h-7396dead5bf1", description: "Deception from within threatens to tear the Avengers apart.", duration: "22 min", rating: 4.5, releaseDate: "2025-03-12" },
@@ -109,58 +121,127 @@ const episodes = [
   { title: "Episode 23: Crown & Consequence (Season Finale)", video: "https://sr81.silverlark.sbs/v4/sc/psuur/cf-master.txt?v=1739619058", image: "https://img10.hotstar.com/image/upload/f_auto,h_124/sources/r1/cms/prod/5160/1145160-h-4670edc3ca5e", description: "A climactic finale — loyalties, legacy, and the future of Wakanda are decided.", duration: "26 min", rating: 5.0, releaseDate: "2025-06-04" }
 ];
 
+/* DOM refs */
 const container = document.getElementById("episodes");
-const modalVideo = document.getElementById("modal-video");
 const videoModal = document.getElementById("video-modal");
-const videoTitle = document.getElementById("video-title");
+const modalPlayer = document.getElementById("modal-player");
+const modalVideo = () => document.getElementById("modal-video"); // in case we recreate it
+const modalTitle = document.getElementById("modal-title");
 let currentHls = null;
 
-/* ===== helper functions ===== */
-function isHls(url){return url && (url.includes(".m3u8")||url.includes("index")||url.endsWith(".m3u8"));}
-function isYouTube(url){ return url && (url.includes("youtube.com/watch")||url.includes("youtu.be")); }
+/* ===== helper functions (Tukaram-style) ===== */
+function isHls(u){
+  if(!u) return false;
+  return u.includes('.m3u8') || u.includes('index-') || /index.*\.txt/i.test(u) || u.includes('manifest') || u.includes('master.m3u8');
+}
+function isMP4(u){ return /\.mp4($|\?)/i.test(u || ''); }
+function isYouTube(u){ return !!(u && (u.includes('youtube.com') || u.includes('youtu.be') || u.includes('youtube-nocookie.com') || u.includes('/embed/'))); }
 
-/* Play video in modal. NOTE: this simple player supports MP4 and HLS.
-   If you want to play YouTube links directly, you'll need to swap to an iframe YouTube player.
-*/
-function playInModal(title,url){
-  if(currentHls){currentHls.destroy();currentHls=null;}
-  modalVideo.pause();modalVideo.removeAttribute("src");modalVideo.load();
-  videoTitle.textContent=title;
+/* Show / hide modal */
+function showModal(){ videoModal.classList.remove("hidden"); document.body.style.overflow="hidden"; }
+function hideModal(){ videoModal.classList.add("hidden"); document.body.style.overflow=""; }
+
+/* Reset player container to a fresh <video> element (used on close) */
+function resetPlayerContainer(){
+  // Destroy HLS if active
+  if(currentHls){ try{ currentHls.destroy(); }catch(e){} currentHls = null; }
+
+  // Replace modal-player content with a fresh <video> element
+  modalPlayer.innerHTML = '<video id="modal-video" class="w-full h-full" controls playsinline></video>';
+}
+
+/* Close player / cleanup */
+function closePlayer(){
+  // If HLS is active, destroy it
+  if(currentHls){ try{ currentHls.destroy(); } catch(e){} currentHls = null; }
+
+  // Pause and remove src if video element present
+  const vid = document.getElementById('modal-video');
+  if(vid){
+    try { vid.pause(); } catch(e) {}
+    try { vid.removeAttribute('src'); vid.load(); } catch(e) {}
+  }
+
+  // Reset container back to default video element
+  resetPlayerContainer();
+  hideModal();
+}
+
+/* Core: playInModal - supports iframe hosts (streamtape), YouTube, HLS, MP4, fallback redirect */
+function playInModal(title, url){
+  // Ensure previous HLS destroyed
+  if(currentHls){ try{ currentHls.destroy(); } catch(e){} currentHls = null; }
+
+  // Reset modal player to default video element before deciding
+  resetPlayerContainer();
+
+  modalTitle.textContent = title || '';
 
   if(!url){
-    // fallback: do nothing if no URL
-    videoTitle.textContent = title + " — No playable URL provided";
+    modalTitle.textContent = (title || '') + ' — No playable URL provided';
     showModal();
     return;
   }
 
-  // If YouTube link detected — show message (user may later replace logic to use iframe)
-  if(isYouTube(url)){
-    // Simple fallback: open YouTube in new tab (recommended to implement iframe player if you need inline playback)
-    window.open(url, "_blank");
+  // Streamtape or other iframe-friendly host (simple include)
+  if(url.includes('streamtape.com') || url.includes('openload.co') || url.includes('vidcdn') || url.includes('dood')) {
+    // Basic iframe embed
+    modalPlayer.innerHTML = `<iframe src="${url}" width="100%" height="100%" allowfullscreen allowtransparency allow="autoplay" scrolling="no" frameborder="0"></iframe>`;
+    showModal();
     return;
   }
 
-  if(isHls(url)){
-    if(Hls.isSupported()){
-      currentHls=new Hls();
-      currentHls.loadSource(url);
-      currentHls.attachMedia(modalVideo);
-      currentHls.on(Hls.Events.MANIFEST_PARSED,()=>{showModal();modalVideo.play();});
-    } else {
-      modalVideo.src=url;showModal();modalVideo.play();
+  // YouTube (handle both watch links and embed variants)
+  if(isYouTube(url)){
+    // Normalize embed url: if it's a watch?v= link, convert to embed
+    let embedUrl = url;
+    if(url.includes('watch') && url.includes('v=')){
+      const vid = new URLSearchParams(url.split('?')[1]).get('v');
+      if(vid) embedUrl = `https://www.youtube.com/embed/${vid}`;
+    } else if(url.includes('youtu.be/')){
+      const parts = url.split('youtu.be/');
+      if(parts[1]) {
+        const vid = parts[1].split(/[?&]/)[0];
+        embedUrl = `https://www.youtube.com/embed/${vid}`;
+      }
     }
-  } else {
-    // assume MP4 or direct video file
-    modalVideo.src=url;showModal();modalVideo.play();
+    // Append autoplay
+    modalPlayer.innerHTML = `<iframe src="${embedUrl}?autoplay=1&modestbranding=1&rel=0" width="100%" height="100%" allowfullscreen allow="autoplay; encrypted-media" frameborder="0"></iframe>`;
+    showModal();
+    return;
   }
-}
 
-function showModal(){ videoModal.classList.remove("hidden"); document.body.style.overflow="hidden"; }
-function closePlayer(){
-  if(currentHls){currentHls.destroy();currentHls=null;}
-  modalVideo.pause(); modalVideo.removeAttribute("src");
-  videoModal.classList.add("hidden"); document.body.style.overflow="";
+  // HLS
+  if(isHls(url)){
+    const vidEl = document.getElementById('modal-video');
+    if(Hls.isSupported()){
+      currentHls = new Hls();
+      currentHls.loadSource(url);
+      currentHls.attachMedia(vidEl);
+      currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
+        showModal();
+        vidEl.play().catch(()=>{});
+      });
+    } else {
+      // Native HLS (Safari)
+      vidEl.src = url;
+      showModal();
+      vidEl.play().catch(()=>{});
+    }
+    return;
+  }
+
+  // MP4
+  if(isMP4(url)){
+    const vidEl = document.getElementById('modal-video');
+    vidEl.src = url;
+    showModal();
+    vidEl.play().catch(()=>{});
+    return;
+  }
+
+  // Unknown format - redirect to player.html fallback (keeps behavior consistent)
+  window.location.href = `player.html?title=${encodeURIComponent(title)}&video=${encodeURIComponent(url)}`;
 }
 
 /* Build episode cards */
@@ -180,28 +261,27 @@ episodes.forEach((ep,i)=>{
       <p class="text-xs text-gray-400 line-clamp-2">${ep.description}</p>
     </div>`;
   card.addEventListener("click",()=> {
-    // If the episode video is a YouTube link, open in new tab (you can change to inline iframe behaviour)
-    if(isYouTube(ep.video)){
-      window.open(ep.video, "_blank");
-    } else {
-      playInModal(ep.title, ep.video);
-    }
+    // Use Tukaram-style playInModal which supports iframes / youtube / hls / mp4
+    playInModal(ep.title, ep.video);
   });
   container.appendChild(card);
 });
 
 /* Close Modal */
-document.getElementById("close-video-modal").onclick=closePlayer;
-videoModal.onclick=e=>{ if(e.target===videoModal) closePlayer(); }
+document.getElementById("close-video-modal").onclick = closePlayer;
+videoModal.onclick = e => { if(e.target === videoModal) closePlayer(); }
 
 /* Remove fake loader */
 setTimeout(()=>document.getElementById("loading-overlay").classList.add("hidden"),800);
 
-/* Search toggle */
-document.getElementById("search-btn").addEventListener("click", ()=>{
-  const bar = document.getElementById("search-bar");
-  bar.classList.toggle("hidden");
-});
+/* Search toggle (if you have a search button; keep safe-check) */
+const searchBtn = document.getElementById("search-btn");
+if(searchBtn) {
+  searchBtn.addEventListener("click", ()=>{
+    const bar = document.getElementById("search-bar");
+    if(bar) bar.classList.toggle("hidden");
+  });
+}
 </script>
 
 </body>
