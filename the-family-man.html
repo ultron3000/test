@@ -136,19 +136,19 @@ body {
 const movies = [
   { 
     title: "Season 1", 
-    video: "https://861134091.tapecontent.net/radosgw/yjwr3oakyoI1qDl/soiniMziENdeponSk_mpA9YbnYZB3vaD_gHg-hkXYVRXVdbcHGpRnX8GNi57tskgImF3Ed9soT_BXpry6fT3C_22V0uS7DWFaZuE5cm6O8p5cMCjfX4WMq6rVgt3ER9dsWR7F2xFTaUoCJC9ZY6zS6eDyGj9pQ34FGW55z_vyLT2PGV_n4r8bqcWZAhkR7MF0cHyxHMSLYhsMAGV-wiQmxoYRKOInDpSPaO8uJwh2UPJ85R1xisXqKuKNDieTYIhJE497_U2-KuwyrYbpkXRdShGZ-FpKP5SvHuOcoA5tj-Zshfxk7d2NEN036ZWm0NI1Pz6lpk5EJ8XBAtM/The+Family+Man+%282019%29+Hindi+Season+1+Complete+720pc.mp4?stream=1",
+    video: "https://mega.nz/embed/FvYUQArZ#Dy2zBP3WzBnZDgsdF03MOxSrq0-Fvb3pr0EcVa4CuB4",
     image: "https://resizing.flixster.com/-XZAfHZM39UwaGJIFWKAE8fS0ak=/v3/t/assets/p17362077_b_v8_aa.jpg",
     year: 2019
   },
   { 
     title: "Season 2", 
-    video: "https://858142514.tapecontent.net/radosgw/4o2vDPkv3ZSKDoB/nKT3gtImRliYdxr9_pxxTKmjehS_YO95XQsZMxjc1ZbRzpaq2r0qmKiSbbd7EOPcUjufg8YIqwyJDh-vJcHL7MH5JHy5IkQbVPhtgG8Q69pHYc-A9Aux_VplB5V1BRP6FcwZqFFof3gf9Zwa7fbbposaq_lIxG6NM-PK0PMVBSrHXoCti4dEeiHZvIsH7b5T_xkZeyjT3V9-hrxDl6HRNtvbI8NGxElBSWUomDwrJbtQjaemXmizwB2Ha7FqOoVUeD2n5zgGEMdYV7eNGaKvzLuQIECc7ExzGdcx2IyqFxYrIl1wCvIbSDR4aTY/The_Family_Man_%282021%29_Hindi_Season_2_720p.mp4?stream=1",
+    video: "https://mega.nz/embed/87pTyaxI#DZzFEFGar9u8Pu60L2i9Gpj21aAM2CUZ8T3HJrxJevM",
     image: "https://images.news18.com/ibnlive/uploads/2025/10/1761299961_the-family-man-2025-10-8adfa0fc3a06430bee6ee878141222e3.jpg",
     year: 2021
   },
   { 
     title: "Season 3", 
-    video: "https://2453352374.tapecontent.net/radosgw/RqQYK2ak2jHde0Q/sqL07gK8OHKd45Bzj-Nz1MbEoQT5OOGb8jB120cOC-Z1ChTdyv97b81lKT7AOIWWwK_6XC7kJuoJUOyEUtpoqhPFiaWwVcQ4ThYiR6st5u_EvjxY2UAVAvd9V-Zn4nx6xRKqP_7YZ07ZcKANKRp_zrc-ctgKhxC5gvdefuZPHjHuQuCeW4X7qmfv964SDVQ3T_FXUrqddo3dlrxbyHwahBozpwEtUfDi-dvTiH7XPKoUOdja5jCpE-6lrfKZwArIUxTU7K6u9f926MHWm1iX9TwJDV1xwwBEnWnGYnQn333r9yVp0DMcQVQax-foanFqi1YvzrLxh14IrW-j/The+Family+Man+%282025%29+Hindi+Season+3+Complete+720p.mkv.mp4?stream=1",
+    video: "https://streamtape.com/e/RqQYK2ak2jHde0Q/",
     image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDFz8QcFjCYlLcIqKMpzdfdHhMIfMv2tEDiQ&s",
     year: 2025
   },
@@ -165,6 +165,7 @@ function hideModal(){ videoModal.classList.add('hidden'); document.body.style.ov
 function isHls(u){return u.includes('.m3u8')||u.includes('index-')||/index.*\.txt/i.test(u);}
 function isMP4(u){return /\.mp4($|\?)/i.test(u);}
 function isYouTube(u){return u.includes('youtu');}
+function isMega(u){return u.includes("mega.nz/embed");}
 
 function playInModal(title, url) {
   if (currentHls) {
@@ -180,6 +181,11 @@ function playInModal(title, url) {
     playerContainer.innerHTML = `<iframe src="${url}" width="100%" height="100%" allowfullscreen allowtransparency allow="autoplay" scrolling="no" frameborder="0"></iframe>`;
     showModal();
     return;
+  }
+
+  if(isMega(url)){
+    playerContainer.innerHTML = `<iframe src="${url}" allowfullscreen style="width:100%;height:72vh;border:0;border-radius:8px"></iframe>`;
+    showModal(); return;
   }
 
   // YouTube
