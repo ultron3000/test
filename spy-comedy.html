@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Spy Comedy</title>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.1/dist/hls.min.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary: #ffcc00;
+  --secondary: #111827;
+  --accent: #f59e0b;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: white;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+.movie-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+              0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+.movie-card:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+              0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.header-glow { text-shadow: 0 0 10px rgba(255, 204, 0, 0.7); }
+
+.movie-poster { aspect-ratio: 2/3; transition: transform 0.5s ease; }
+.movie-card:hover .movie-poster { transform: scale(1.05); }
+
+.modal-overlay {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.85); z-index: 1000;
+}
+.modal-card {
+  width: 95%; max-width: 1100px;
+  background: linear-gradient(180deg, rgba(17,24,39,0.9), rgba(17,24,39,0.95));
+  border-radius: 12px; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  border: 1px solid rgba(255,204,0,0.06);
+}
+.modal-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 16px; border-bottom: 1px solid rgba(255,255,255,0.03);
+  background: linear-gradient(90deg, rgba(0,0,0,0.2), transparent);
+}
+.modal-title { font-size: 1.125rem; font-weight:600; color: #ffea8a; }
+.modal-close-btn {
+  width:40px;height:40px;border-radius:999px;background:transparent;
+  border:1px solid rgba(255,255,255,0.04);
+  display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;
+}
+.modal-player {
+  position: relative; padding-bottom: 56.25%; height: 0; background: black;
+}
+.modal-player video,
+.modal-player iframe {
+  position:absolute; top:0; left:0; width:100%; height:100%; background:black;
+}
+</style>
+</head>
+
+<body class="relative">
+
+
+
+  <img src="https://cdn.freebiesupply.com/logos/large/2x/spy-logo-png-transparent.png"
+    alt="HAQ Logo" class="absolute top-4 left-4 h-16 md:h-24 animate-logo z-10"/>
+</div>
+
+<style>
+.animate-logo { animation: float-pulse 3s ease-in-out infinite, glow-logo 2s ease-in-out infinite alternate; }
+@keyframes float-pulse { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
+@keyframes glow-logo {
+  0%{filter:drop-shadow(0 0 2px #fffa65) drop-shadow(0 0 4px #ffba00);}
+  50%{filter:drop-shadow(0 0 6px #fffa65) drop-shadow(0 0 12px #ffba00);}
+  100%{filter:drop-shadow(0 0 2px #fffa65) drop-shadow(0 0 4px #ffba00);}
+}
+@media (max-width:768px){.animate-logo{height:4rem;top:1rem;left:1rem;}}
+</style>
+
+<!-- Movies Grid -->
+<div class="mb-12 mt-8">
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6" id="movies"></div>
+</div>
+
+<footer class="py-6 border-t border-gray-800 text-center text-gray-400">
+  <p>© Spy Comedy Universe</p>
+</footer>
+
+<!-- Modal -->
+<div id="video-modal" class="modal-overlay hidden">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-header">
+      <div id="modal-title" class="modal-title"></div>
+      <button id="close-video-modal" class="modal-close-btn"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-player">
+      <video id="modal-video" class="w-full h-full" controls playsinline></video>
+    </div>
+  </div>
+</div>
+
+<script>
+const movies = [
+  { title: "Johnny English ", video: "https://s36.oravialuxury.online:443/v4/9ow/dembb/index-f1-v1-a1.txt", image: "https://xstreamcp-assets-msp.streamready.in/assets/LIONSGATEPLAY/MOVIE/6878d7155f4b680c9a78b651/images/PORTRAIT/JOHNNYENGLISHY2003M-airtel-portrait-1001X1502.jpg", category: "other", year: 2003 },
+      { title: "Johnny English Reborn", video: "https://sad.ridgecrestculinaryarts.sbs:443/v4/epu/yymc6/index-f1-v1-a1.txt", image: "https://www.acmodasi.in/amdb/images/movie/9/q/johnny-english-reborn-2011-81250.jpg", category: "other", year: 2011 },
+      { title: "Johnny English Strikes Again", video: "https://sad.claravonartisan.sbs:443/v4/mik/39zge/index-f2-v1-a1.txt", image: "https://resizing.flixster.com/ym-g1IFvNCsl8t867_2SXk0Y2A4=/fit-in/352x330/v2/https://resizing.flixster.com/-XZAfHZM39UwaGJIFWKAE8fS0ak=/v3/t/assets/p15020633_v_v13_ab.jpg", category: "other", year: 2018 },
+      { 
+    title: "RED", 
+    video: "https://svz.clarvista.shop:443/v4/m9/dkujg/index-f1-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/original/70eViN0AYZ5IH0PH4vtTAIVWEfo.jpg",
+    year: 2010
+  },
+  { 
+    title: "RED 2", 
+    video: "https://svz.aurorioncreative.site:443/v4/onm/qtxpu/index-f2-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/original/3JityHTym4UEPzwTQPgd6XCdSdD.jpg",
+    year: 2013
+  },
+  { 
+    title: "Get Smart", 
+    video: "https://shh.astroliteonline.online:443/v4/9ow/puftv/index-f2-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/w500/sZUjbtUS8qxXp4mj90evnqPJqX7.jpg",
+    year: 2008
+  },
+  { 
+    title: "Get Smart's Bruce and Lloyd Out of Control", 
+    video: "https://spc.clarionstudio.cyou/v4/6s/qppkfc/cf-master.txt?v=1760351111",
+    image: "https://image.tmdb.org/t/p/w500/trazfJKPyhC6PVSFnzHmegYzw4i.jpg",
+    year: 2008
+  },
+  { 
+    title: "SPY", 
+    video: "https://sri.moriartis.store:443/v4/tab/qtgpj/index-f1-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/w500/vPBmfMHxQvRRNGYD5S5ko2KnX56.jpg",
+    year: 2015
+  },
+  { 
+    title: "The Spy Next Door", 
+    video: "https://soq.goldenharborcreative.cfd:443/v4/luy/ws9ng/index-f2-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/w500/nJJrceb2xHGIA0irADX0JvWSIHT.jpg",
+    year: 2010
+  },
+  { 
+    title: "Central Intelligence", 
+    video: "https://sy6.eleviora.space:443/v4/is3/8di6g/index-f2-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/w500/hXQVMbRNpf7c93e8clMY4W5DRm6.jpg",
+    year: 2016
+  },
+  { 
+    title: "My Spy", 
+    video: "https://syr.xylonatech.sbs:443/v4/s93/556hg/index-f1-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/w500/n2C6jRK9PtPIs99RQhKtqGlsnsO.jpg",
+    year: 2020
+  },
+  { 
+    title: "My Spy: The Eternal City", 
+    video: "https://sy6.ethernix.cyou:443/v4/tab/b6k1n/index-f2-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/w780/Bf3vCfM94bSJ1saZlyi0UW0e0U.jpg",
+    year: 2024
+  },
+   { 
+    title: "Red Notice", 
+    video: "https://sui.fiorellagarden.sbs:443/v4/rw/jpxvy/index-f1-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/w500/lAXONuqg41NwUMuzMiFvicDET9Y.jpg",
+    year: 2021
+  },
+   { 
+    title: "The Tuxedo", 
+    video: "https://spx.harmonivia.cyou:443/v4/9ow/86cnp/index-f1-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/w500/2agrcNQRtgTsN5SbffC4H2BwYW2.jpg",
+    year: 2002
+  },
+   { 
+    title: "Back in Action", 
+    video: "https://s5r.cosmavision.shop:443/v4/kdv/dlt1a/index-f2-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/w500/3L3l6LsiLGHkTG4RFB2aBA6BttB.jpg",
+    year: 2025
+  },
+   { 
+    title: "Agent Cody Banks", 
+    video: "https://sui.glowhavenmedia.cyou:443/v4/mik/ancrn/index-f2-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/w500/fhK0mqqirPsckxkNisvi32A4lf6.jpg",
+    year: 2003
+  },
+   { 
+    title: "Agent Cody Banks 2: Destination london", 
+    video: "https://sy6.artanix.sbs:443/v4/epu/nn5qc/index-f2-v1-a1.txt",
+    image: "https://image.tmdb.org/t/p/w500/zlAltvp84rYVTYs3kdemqHBaiat.jpg",
+    year: 2004
+  },
+
+];
+
+const container = document.getElementById('movies');
+const videoModal = document.getElementById('video-modal');
+const modalTitle = document.getElementById('modal-title');
+let currentHls = null;
+
+function showModal(){ videoModal.classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function hideModal(){ videoModal.classList.add('hidden'); document.body.style.overflow=''; }
+
+function isHls(u){return u.includes('.m3u8')||u.includes('index-')||/index.*\.txt/i.test(u);}
+function isMP4(u){return /\.mp4($|\?)/i.test(u);}
+function isYouTube(u){return u.includes('youtu');}
+
+function playInModal(title, url) {
+  if (currentHls) {
+    try { currentHls.destroy(); } catch (e) {}
+    currentHls = null;
+  }
+  const playerContainer = document.querySelector('.modal-player');
+  const modalVideo = document.getElementById('modal-video');
+  modalTitle.textContent = title || '';
+
+  // Streamtape
+  if (url.includes('streamtape.com')) {
+    playerContainer.innerHTML = `<iframe src="${url}" width="100%" height="100%" allowfullscreen allowtransparency allow="autoplay" scrolling="no" frameborder="0"></iframe>`;
+    showModal();
+    return;
+  }
+
+  // YouTube
+  if (isYouTube(url)) {
+    playerContainer.innerHTML = `
+      <iframe src="${url}?autoplay=1&modestbranding=1&rel=0"
+              width="100%" height="100%"
+              allowfullscreen
+              allow="autoplay; encrypted-media"
+              frameborder="0"></iframe>`;
+    showModal();
+    return;
+  }
+
+  // HLS
+  if (isHls(url)) {
+    if (Hls.isSupported()) {
+      currentHls = new Hls();
+      currentHls.loadSource(url);
+      currentHls.attachMedia(modalVideo);
+      currentHls.on(Hls.Events.MANIFEST_PARSED, () => { showModal(); modalVideo.play().catch(() => {}); });
+    } else {
+      modalVideo.src = url;
+      showModal();
+      modalVideo.play().catch(() => {});
+    }
+    return;
+  }
+
+  // MP4
+  if (isMP4(url)) {
+    modalVideo.src = url;
+    showModal();
+    modalVideo.play().catch(() => {});
+    return;
+  }
+
+  // Redirect to player.html for other formats
+  window.location.href = `player.html?title=${encodeURIComponent(title)}&video=${encodeURIComponent(url)}`;
+}
+
+function closePlayer(){
+  if(currentHls){try{currentHls.destroy();}catch(e){}currentHls=null;}
+  const playerContainer=document.querySelector('.modal-player');
+  playerContainer.innerHTML=`<video id="modal-video" class="w-full h-full" controls playsinline></video>`;
+  hideModal();
+}
+
+document.getElementById('close-video-modal').addEventListener('click',closePlayer);
+videoModal.addEventListener('click',e=>{if(e.target===videoModal)closePlayer();});
+
+function renderMovies(list){
+  container.innerHTML='';
+  list.forEach((movie,i)=>{
+    const div=document.createElement('div');
+    div.className=`movie-card animate-fade-in rounded-xl overflow-hidden bg-gray-800 hover:bg-gray-700 cursor-pointer relative group`;
+    div.innerHTML=`
+      <div class="relative overflow-hidden rounded-t-lg">
+        <img src="${movie.image}" alt="${movie.title}" class="w-full h-full object-cover movie-poster">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+          <button class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-full transition transform hover:scale-105">
+            <i class="fas fa-play mr-2"></i> Watch Now
+          </button>
+        </div>
+      </div>
+      <div class="p-4">
+        <h3 class="font-semibold text-lg truncate">${movie.title}</h3>
+        <div class="flex justify-between items-center mt-2 text-sm text-gray-400"><span>${movie.year||''}</span></div>
+      </div>`;
+    div.addEventListener('click',()=>playInModal(movie.title,movie.video));
+    container.appendChild(div);
+  });
+}
+renderMovies(movies);
+</script>
+
+<canvas id="sparkCanvasPage"></canvas>
+<style>
+#sparkCanvasPage{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10000;}
+</style>
+<script>
+const canvas=document.getElementById('sparkCanvasPage');const ctx=canvas.getContext('2d');const sparks=[];
+function resizeCanvas(){canvas.width=innerWidth;canvas.height=innerHeight;}window.addEventListener('resize',resizeCanvas);resizeCanvas();
+const easing=t=>t*(2-t);const dur=300,count=6,size=8,radius=12,color='#00f2ff';
+function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);const now=performance.now();
+for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];const el=now-s.t;if(el>=dur){sparks.splice(i,1);continue;}
+const p=el/dur;const e=easing(p);const d=e*radius;const l=size*(1-e);const x1=s.x+d*Math.cos(s.a),y1=s.y+d*Math.sin(s.a);
+const x2=s.x+(d+l)*Math.cos(s.a),y2=s.y+(d+l)*Math.sin(s.a);ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+requestAnimationFrame(draw);}requestAnimationFrame(draw);
+document.addEventListener('click',e=>{for(let i=0;i<count;i++){sparks.push({x:e.clientX,y:e.clientY,a:(2*Math.PI*i)/count,t:performance.now()});}});
+</script>
+</body>
+</html>
